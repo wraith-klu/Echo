@@ -12,7 +12,12 @@ function cleanUrl(baseUrl) {
 export async function pingBackend(baseUrl) {
   const url = `${cleanUrl(baseUrl)}/health`
   const t0 = performance.now()
-  const response = await fetch(url, { method: 'GET', signal: AbortSignal.timeout(5000) })
+  const response = await fetch(url, {
+    method: 'GET',
+    mode: 'cors',
+    credentials: 'omit',
+    signal: AbortSignal.timeout(15000),
+  })
   const latencyMs = Math.round(performance.now() - t0)
 
   if (!response.ok) {
@@ -25,7 +30,12 @@ export async function pingBackend(baseUrl) {
 
 export async function fetchServicesStatus(baseUrl) {
   const url = `${cleanUrl(baseUrl)}/api/v1/status`
-  const response = await fetch(url, { method: 'GET', signal: AbortSignal.timeout(5000) })
+  const response = await fetch(url, {
+    method: 'GET',
+    mode: 'cors',
+    credentials: 'omit',
+    signal: AbortSignal.timeout(15000),
+  })
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`)
   }

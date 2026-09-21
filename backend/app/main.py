@@ -92,9 +92,11 @@ if not origins or "*" in origins:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True if "*" not in origins else False,
+    allow_origin_regex=r"https?://.*",
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # ── Health & root endpoints ────────────────────────────────────

@@ -39,7 +39,7 @@ export const App = () => {
 
   const timerRef = useRef(null)
 
-  const checkHealth = useCallback(async () => {
+  const checkHealth = useCallback(async (retryCount = 1) => {
     setIsPinging(true)
     try {
       const res = await pingBackend(baseUrl)
@@ -53,6 +53,11 @@ export const App = () => {
         // Non-fatal if /status is not yet populated
       }
     } catch (err) {
+      if (retryCount > 0) {
+        // Automatically retry once after 1.5s to handle concurrent queueing / wake-up
+        setTimeout(() => checkHealth(retryCount - 1), 1500)
+        return
+      }
       setIsOnline(false)
       setPingResult({
         error: err instanceof Error ? err.message : 'Backend unreachable',
