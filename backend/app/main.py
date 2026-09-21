@@ -85,8 +85,7 @@ app = FastAPI(
 # CORS configuration
 # Allowing wildcards or configured origins for IoT/Web integrations
 origins = [str(origin).rstrip("/") for origin in settings.BACKEND_CORS_ORIGINS]
-if not origins:
-    # Default to allow all origins in development if not configured
+if not origins or "*" in origins:
     origins = ["*"]
 
 app.add_middleware(
@@ -97,7 +96,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Root-level health check endpoint
+# Root-level status & health check endpoints
+@app.get("/", status_code=200)
+async def root():
+    return {
+        "name": settings.PROJECT_NAME,
+        "status": "online",
+        "docs": "/docs",
+        "health": "/health"
+    }
+
 @app.get("/health", status_code=200)
 async def health_check():
     """

@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: echo-backend
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    plan: starter
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PROJECT_NAME
+        value: "Echo Speech Translation Backend"
+      - key: BACKEND_CORS_ORIGINS
+        value: "*"
+      - key: WHISPER_MODEL_NAME
+        value: "base"
+      - key: TRANSLATION_MODEL_NAME
+        value: "facebook/nllb-200-distilled-600M"
+      - key: TTS_MODEL_NAME
+        value: "suno/bark-small"
+      - key: HF_HUB_DISABLE_XET
+        value: "1"
+      - key: DATABASE_URL
+        sync: false

@@ -14,7 +14,7 @@ import { AlertTriangle, Sparkles, Mic, Globe2, Volume2, Cpu } from 'lucide-react
 
 export const App = () => {
   const [activeTab, setActiveTab] = useState('translate')
-  const [baseUrl, setBaseUrl] = useState('http://localhost:8000')
+  const [baseUrl, setBaseUrl] = useState(import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000')
 
   // Backend Health State
   const [isOnline, setIsOnline] = useState(null)
