@@ -33,7 +33,7 @@ PIPER_MODEL_MAP = {
     "it": "it/it_IT/paola/medium/it_IT-paola-medium.onnx",
     "pt": "pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx",
     "zh": "zh/zh_CN/huayan/medium/zh_CN-huayan-medium.onnx",
-    "ja": "ja/ja_JA/hi_fi_captain/medium/ja_JA-hi_fi_captain-medium.onnx",
+    "ja": "ja/ja_JP/hi_fi_captain/medium/ja_JP-hi_fi_captain-medium.onnx",
     "ko": "ko/ko_KR/kss/medium/ko_KR-kss-medium.onnx",
     "ru": "ru/ru_RU/dmitri/medium/ru_RU-dmitri-medium.onnx",
     "ar": "ar/ar_JO/kareem/medium/ar_JO-kareem-medium.onnx",   # Arabic

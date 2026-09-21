@@ -9,6 +9,7 @@ Falls back gracefully if GEMINI_API_KEY is not set.
 """
 import os
 import time
+import concurrent.futures
 
 from app.core.logger import logger
 
@@ -143,7 +144,7 @@ class TranslationService:
 
         t0 = time.time()
 
-        # ── 2. Attempt Gemini API translation with model fallbacks ───
+        # ── 2. Attempt Gemini API translation with parallel speculative race ─
         if self._genai:
             prompt = (
                 f"Translate the following text from {src_name} to {tgt_name}. "
@@ -155,30 +156,47 @@ class TranslationService:
             models_to_try = [self._active_model_name] + [
                 m for m in self._candidate_models if m != self._active_model_name
             ]
+            # Take top 3 candidate models to race concurrently without overloading quota
+            race_models = [m for m in models_to_try if m][:3]
 
             translated = None
             method = "fallback-echo"
 
-            for model_name in models_to_try:
-                try:
-                    client = self._genai.GenerativeModel(model_name)
-                    response = client.generate_content(prompt)
-                    if response and response.text:
-                        translated = response.text.strip()
-                        method = f"gemini:{model_name}"
-                        self._active_model_name = model_name
+            def _query_model(model_name: str) -> tuple[str, str]:
+                """Query a single Gemini model. Returns (model_name, response_text)."""
+                client = self._genai.GenerativeModel(model_name)
+                resp = client.generate_content(prompt)
+                if resp and resp.text:
+                    txt = resp.text.strip()
+                    if txt:
+                        return model_name, txt
+                raise ValueError(f"Empty response from {model_name}")
+
+            # Race all candidates simultaneously — use whichever finishes first!
+            with concurrent.futures.ThreadPoolExecutor(max_workers=len(race_models)) as executor:
+                futures = {
+                    executor.submit(_query_model, m): m for m in race_models
+                }
+                for fut in concurrent.futures.as_completed(futures):
+                    m_name = futures[fut]
+                    try:
+                        winning_model, res_text = fut.result()
+                        translated = res_text
+                        method = f"gemini:{winning_model}"
+                        self._active_model_name = winning_model
                         logger.info(
-                            f"Gemini translation '{source_lang}'→'{target_lang}' succeeded using '{model_name}' in "
+                            f"Gemini race won by '{winning_model}' for '{source_lang}'→'{target_lang}' in "
                             f"{time.time()-t0:.2f}s"
                         )
+                        # Cancel remaining pending tasks
+                        for remaining_fut in futures:
+                            remaining_fut.cancel()
                         break
-                except Exception as api_err:
-                    logger.warning(
-                        f"Gemini model '{model_name}' translation failed: {api_err}. Trying next candidate..."
-                    )
+                    except Exception as m_err:
+                        logger.warning(f"Gemini candidate '{m_name}' failed in race: {m_err}")
 
             if not translated:
-                logger.warning("All Gemini candidate models failed. Falling back to echo.")
+                logger.warning("All parallel Gemini candidate models failed. Falling back to echo.")
                 translated = clean_text
                 method = "fallback-echo"
         else:
