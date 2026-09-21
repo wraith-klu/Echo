@@ -76,7 +76,6 @@ class TranslationService:
             self._preferred_gemini,
             "gemini-3.6-flash",
             "gemini-3.5-flash-lite",
-            "gemini-1.5-flash-latest",
         ]
         self._candidate_models = list(dict.fromkeys(self._candidate_models))
         self._genai = None
