@@ -183,7 +183,7 @@ class TTSService:
         # We enforce exactly 16000Hz, mono, 16-bit depth (2 bytes per sample) for I2S.
         t_conv = time.time()
         try:
-            audio = AudioSegment.from_file(io.BytesIO(raw_wav_bytes), format="wav")
+            audio: AudioSegment = AudioSegment.from_file(io.BytesIO(raw_wav_bytes), format="wav")  # type: ignore[assignment]
             
             # Apply formatting if it doesn't match
             if audio.frame_rate != 16000 or audio.channels != 1 or audio.sample_width != 2:
@@ -191,10 +191,10 @@ class TTSService:
                     f"Converting audio from {audio.frame_rate}Hz/{audio.channels}ch/{audio.sample_width*8}bit "
                     "-> 16000Hz/1ch/16bit..."
                 )
-                audio = audio.set_frame_rate(16000).set_channels(1).set_sample_width(2)
+                audio = audio.set_frame_rate(16000).set_channels(1).set_sample_width(2)  # type: ignore[attr-defined]
                 
             out_buf = io.BytesIO()
-            audio.export(out_buf, format="wav")
+            audio.export(out_buf, format="wav")  # type: ignore[attr-defined]
             final_wav_bytes = out_buf.getvalue()
         except Exception as conv_err:
             logger.warning(f"Audio conversion failed: {conv_err}. Returning raw Piper WAV.", exc_info=True)
