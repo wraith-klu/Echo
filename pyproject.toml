@@ -1,13 +1,13 @@
 [tool.poetry]
-name = "speech-translation-backend"
-version = "0.1.0"
-description = "Real-time multilingual speech translation backend service using FastAPI"
+name = "echo-backend"
+version = "1.0.0"
+description = "Echo — Real-time multilingual speech translation backend (free-tier optimised)"
 authors = ["Wraith <wraithyadav@gmail.com>"]
 readme = "README.md"
 package-mode = false
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.13"
+python = ">=3.10"
 fastapi = "^0.111.0"
 uvicorn = {extras = ["standard"], version = "^0.30.0"}
 python-multipart = "^0.0.9"
@@ -16,18 +16,26 @@ python-dotenv = "^1.0.1"
 pydantic-settings = "^2.3.4"
 soundfile = "^0.12.1"
 numpy = "^1.24.0"
+
+# ASR — Whisper tiny (runs comfortably on 512 MB RAM)
 faster-whisper = "^1.0.3"
 onnxruntime = "<1.24.0"
 
-torch = "^2.2.0"
-transformers = "^4.38.0"
-sentencepiece = "^0.2.0"
-langdetect = "^1.0.9"
+# Translation — Gemini Flash API (no local model weights; free-tier friendly)
+google-generativeai = "^0.7.0"
+
+# TTS — Piper (voices lazy-loaded on first request)
 pydub = "^0.25.1"
 piper-tts = "^1.7.0"
+
+# Language detection
+langdetect = "^1.0.9"
+
+# Database
 sqlalchemy = "^2.0.52"
 asyncpg = "^0.31.0"
 alembic = "^1.19.1"
+aiosqlite = "^0.22.1"
 
 [build-system]
 requires = ["poetry-core"]
