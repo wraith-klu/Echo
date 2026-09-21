@@ -1,0 +1,6 @@
+=== NLLB Download Script starting at 13:37:43 ===
+huggingface_hub imported OK
+Starting hf_hub_download for pytorch_model.bin ...
+SUCCESS: Downloaded to C:\Users\Admin\.cache\huggingface\hub\models--facebook--nllb-200-distilled-600M\snapshots\f8d333a098d19b4fd9a8b18f94170487ad3f821d\pytorch_model.bin
+Size: 2460.5 MB
+=== Done ===

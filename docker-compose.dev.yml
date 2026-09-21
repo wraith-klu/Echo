@@ -1,0 +1,42 @@
+# =============================================================================
+# docker-compose.dev.yml — LOCAL DEVELOPMENT OVERRIDE
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# What this changes from production:
+#   - web: mounts source code for live --reload (no rebuild needed)
+#   - web: publishes port 8000 directly to host (skip Nginx)
+#   - web: uses .env (not .env.production)
+#   - db:  publishes port 5432 to host (useful for DB GUI clients)
+#   - No nginx service started (handled by Compose override)
+# =============================================================================
+
+services:
+  db:
+    ports:
+      - "5432:5432"                               # expose to host for DB GUI / direct access
+
+  web:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - ./backend/.env                            # local dev .env (not .env.production)
+    environment:
+      POSTGRES_HOST: db
+    volumes:
+      - ./backend:/app                            # live mount for --reload
+      - model_cache:/model_cache
+      - audio_uploads:/app/audio_uploads
+    ports:
+      - "8000:8000"                               # directly accessible without Nginx
+    command: >
+      uvicorn app.main:app
+        --host 0.0.0.0
+        --port 8000
+        --reload
+
+  nginx:
+    profiles:
+      - production-only                           # prevents nginx from starting in dev mode

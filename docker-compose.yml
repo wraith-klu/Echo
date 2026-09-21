@@ -1,0 +1,110 @@
+# =============================================================================
+# docker-compose.yml — PRODUCTION
+# Oracle Cloud Always Free / any Ubuntu VM
+#
+# Services:
+#   db      → PostgreSQL 15
+#   web     → FastAPI backend (Uvicorn, no --reload)
+#   nginx   → Reverse proxy + HTTPS via Certbot / pre-configured SSL
+#
+# Volumes:
+#   postgres_data  → Database files (persistent)
+#   model_cache    → Whisper, NLLB-200, Piper voice models (persistent, ~10-15 GB)
+#   audio_uploads  → Received/generated audio WAV files (persistent)
+#   nginx_certs    → Let's Encrypt SSL certificates (persistent)
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL 15
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:15-alpine
+    container_name: speech_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}        # REQUIRED — set in .env
+      POSTGRES_DB: ${POSTGRES_DB:-speech_translation}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    expose:
+      - "5432"                                        # not published to host; only accessible inside Docker network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # FastAPI Backend
+  # ---------------------------------------------------------------------------
+  web:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: speech_web
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env.production                    # production secrets — never commit this file
+    environment:
+      # Override the DB host to point to the Docker service name
+      POSTGRES_HOST: db
+    volumes:
+      - model_cache:/model_cache                     # AI model cache (persists across rebuilds)
+      - audio_uploads:/app/audio_uploads             # uploaded/generated audio files
+    expose:
+      - "8000"                                       # only nginx needs this port; not published to host
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      start_period: 120s                             # give models time to load
+      retries: 3
+
+  # ---------------------------------------------------------------------------
+  # Nginx Reverse Proxy
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: speech_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"                                      # HTTP → redirect to HTTPS
+      - "443:443"                                    # HTTPS (WSS)
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - nginx_certs:/etc/letsencrypt:ro              # SSL certs from Certbot
+      - nginx_webroot:/var/www/certbot               # ACME challenge webroot
+    depends_on:
+      - web
+
+  # ---------------------------------------------------------------------------
+  # Certbot (one-shot SSL certificate issuance / renewal)
+  # Run manually: docker compose run --rm certbot <args>
+  # Or add a cron: 0 3 * * * docker compose run --rm certbot renew
+  # ---------------------------------------------------------------------------
+  certbot:
+    image: certbot/certbot:latest
+    container_name: speech_certbot
+    volumes:
+      - nginx_certs:/etc/letsencrypt
+      - nginx_webroot:/var/www/certbot
+    profiles:
+      - certbot                                      # only runs when explicitly activated
+
+# =============================================================================
+# Named Volumes
+# =============================================================================
+volumes:
+  postgres_data:
+  model_cache:
+  audio_uploads:
+  nginx_certs:
+  nginx_webroot:

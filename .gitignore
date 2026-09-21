@@ -1,0 +1,54 @@
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+backend/.venv/
+backend/venv/
+backend/env/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Environment files — local and production secrets
+.env
+.env*.local
+backend/.env
+backend/.env*.local
+backend/.env.production       # ← PRODUCTION SECRETS — never commit
+
+# SSH keys (in case generated locally)
+*.pem
+*.key
+id_rsa
+id_ed25519
+
+# Model cache (too large for git)
+model_cache/
+.cache/
+
+# Audio uploads
+audio_uploads/
+backend/audio_uploads/
+backend/test_output/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
