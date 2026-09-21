@@ -50,9 +50,9 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to load ASR Whisper model: {e}", exc_info=True)
 
-    # ── Initialize Translation service (Gemini API — no weights to load) ──
+    # ── Initialize Translation service (NLLB-200 priority with Gemini fallback) ──
     try:
-        logger.info("Initializing Translation service (Gemini Flash API)...")
+        logger.info("Initializing Translation service (NLLB-200 priority + Gemini fallback)...")
         ml_models["translation"] = TranslationService()
         logger.info("Translation service initialized.")
     except Exception as e:

@@ -58,9 +58,14 @@ class Settings(BaseSettings):
     # AI model configuration
     # Use 'tiny' on free-tier hosts (512 MB RAM); upgrade to 'base' or 'small' on paid plans
     WHISPER_MODEL_NAME: str = "tiny"
+    # Translation model settings:
+    # Set TRANSLATION_PROVIDER="auto" (default: try local NLLB-200 first, fallback to Gemini),
+    # "nllb" (local NLLB only), or "gemini" (cloud Gemini only).
+    TRANSLATION_PROVIDER: str = "auto"
+    NLLB_MODEL_NAME: str = "facebook/nllb-200-distilled-600M"
     # Gemini Flash API key & model for cloud-based translation
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-2.0-flash"
+    GEMINI_MODEL: str = "gemini-3.6-flash"
 
     model_config = SettingsConfigDict(
         case_sensitive=True,

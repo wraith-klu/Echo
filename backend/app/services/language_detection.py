@@ -7,7 +7,7 @@ from langdetect.lang_detect_exception import LangDetectException
 DetectorFactory.seed = 0
 
 # Define supported source languages for this project (NLLB / MarianMT compatible standard codes)
-SUPPORTED_LANGUAGES = {"en", "es", "fr", "de", "it", "pt", "zh", "ja", "ko", "ru", "hi"}
+SUPPORTED_LANGUAGES = {"en", "es", "fr", "de", "it", "pt", "zh", "ja", "ko", "ru", "hi", "ar"}
 
 class LanguageDetectionService:
     @staticmethod
