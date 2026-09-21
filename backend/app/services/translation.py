@@ -41,14 +41,28 @@ class TranslationService:
     """
 
     def __init__(self):
-        self._api_key = os.environ.get("GEMINI_API_KEY", "")
-        self._client = None
+        from app.config import settings
+        self._api_key = settings.GEMINI_API_KEY or os.environ.get("GEMINI_API_KEY", "")
+        self._model_name = settings.GEMINI_MODEL or os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+        self._candidate_models = [
+            self._model_name,
+            "gemini-2.0-flash",
+            "gemini-2.5-flash",
+            "gemini-2.0-flash-lite",
+            "gemini-1.5-flash-latest",
+        ]
+        # De-duplicate while preserving order
+        self._candidate_models = list(dict.fromkeys(self._candidate_models))
+        self._genai = None
+        self._active_model_name = None
+
         if self._api_key:
             try:
                 import google.generativeai as genai
                 genai.configure(api_key=self._api_key)
-                self._client = genai.GenerativeModel("gemini-1.5-flash")
-                logger.info("TranslationService: Gemini Flash client initialized.")
+                self._genai = genai
+                self._active_model_name = self._candidate_models[0]
+                logger.info(f"TranslationService: Gemini client initialized with preferred model '{self._active_model_name}'.")
             except ImportError:
                 logger.warning(
                     "google-generativeai package not installed. "
@@ -129,23 +143,42 @@ class TranslationService:
 
         t0 = time.time()
 
-        # ── 2. Attempt Gemini API translation ─────────────────
-        if self._client:
-            try:
-                prompt = (
-                    f"Translate the following text from {src_name} to {tgt_name}. "
-                    f"Output ONLY the translated text with no explanations, labels, or extra commentary.\n\n"
-                    f"{clean_text}"
-                )
-                response = self._client.generate_content(prompt)
-                translated = response.text.strip()
-                method = "gemini-1.5-flash"
-                logger.info(
-                    f"Gemini translation '{source_lang}'→'{target_lang}' done in "
-                    f"{time.time()-t0:.2f}s"
-                )
-            except Exception as api_err:
-                logger.warning(f"Gemini API translation failed: {api_err}. Falling back to echo.")
+        # ── 2. Attempt Gemini API translation with model fallbacks ───
+        if self._genai:
+            prompt = (
+                f"Translate the following text from {src_name} to {tgt_name}. "
+                f"Output ONLY the translated text with no explanations, labels, or extra commentary.\n\n"
+                f"{clean_text}"
+            )
+
+            # Order candidates: try previously working model first, then others
+            models_to_try = [self._active_model_name] + [
+                m for m in self._candidate_models if m != self._active_model_name
+            ]
+
+            translated = None
+            method = "fallback-echo"
+
+            for model_name in models_to_try:
+                try:
+                    client = self._genai.GenerativeModel(model_name)
+                    response = client.generate_content(prompt)
+                    if response and response.text:
+                        translated = response.text.strip()
+                        method = f"gemini:{model_name}"
+                        self._active_model_name = model_name
+                        logger.info(
+                            f"Gemini translation '{source_lang}'→'{target_lang}' succeeded using '{model_name}' in "
+                            f"{time.time()-t0:.2f}s"
+                        )
+                        break
+                except Exception as api_err:
+                    logger.warning(
+                        f"Gemini model '{model_name}' translation failed: {api_err}. Trying next candidate..."
+                    )
+
+            if not translated:
+                logger.warning("All Gemini candidate models failed. Falling back to echo.")
                 translated = clean_text
                 method = "fallback-echo"
         else:

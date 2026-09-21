@@ -58,8 +58,9 @@ class Settings(BaseSettings):
     # AI model configuration
     # Use 'tiny' on free-tier hosts (512 MB RAM); upgrade to 'base' or 'small' on paid plans
     WHISPER_MODEL_NAME: str = "tiny"
-    # Gemini Flash API key for cloud-based translation (no local model weights required)
+    # Gemini Flash API key & model for cloud-based translation
     GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-2.0-flash"
 
     model_config = SettingsConfigDict(
         case_sensitive=True,
