@@ -50,6 +50,7 @@ export const LANG_NAMES = {
 
 export const ENV_PRESETS = [
   { id: 'dev', label: 'Localhost (Dev)', url: 'http://localhost:8000' },
+  { id: 'render', label: 'Render Cloud (Prod)', url: import.meta.env.VITE_BACKEND_URL || 'https://echo-speech-backend.onrender.com' },
   { id: 'proxy', label: 'Vite Proxy (Local)', url: '' },
-  { id: 'prod', label: 'Oracle Cloud (Prod)', url: 'https://api.yourdomain.com' },
+  { id: 'custom_prod', label: 'Custom Domain', url: 'https://api.yourdomain.com' },
 ]

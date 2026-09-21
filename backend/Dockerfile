@@ -84,9 +84,10 @@ VOLUME ["/model_cache"]
 VOLUME ["/app/audio_uploads"]
 
 # --- Non-root user for security ------------------------------------------
-RUN addgroup --system appgroup \
+RUN mkdir -p /model_cache /app/audio_uploads \
+    && addgroup --system appgroup \
     && adduser --system --ingroup appgroup appuser \
-    && chown -R appuser:appgroup /app
+    && chown -R appuser:appgroup /app /model_cache
 USER appuser
 
 # --- Port ----------------------------------------------------------------
@@ -97,9 +98,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
 
 # --- Entrypoint ----------------------------------------------------------
-# Production: no --reload, workers=1 (single process, models in memory)
-CMD ["uvicorn", "app.main:app", \
-     "--host", "0.0.0.0", \
-     "--port", "8000", \
-     "--workers", "1", \
-     "--log-level", "info"]
+# Dynamic $PORT support for Render / Heroku / Container clouds (defaults to 8000)
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1 --log-level info"]

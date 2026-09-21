@@ -26,18 +26,29 @@ class Settings(BaseSettings):
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: str = "5432"
     POSTGRES_DB: str = "speech_translation"
+    DATABASE_URL: str | None = None
     SQLALCHEMY_DATABASE_URL: str | None = None
 
     @property
     def async_database_url(self) -> str:
-        if self.SQLALCHEMY_DATABASE_URL:
-            url = self.SQLALCHEMY_DATABASE_URL
+        raw_url = self.DATABASE_URL or self.SQLALCHEMY_DATABASE_URL
+        if raw_url:
+            url = raw_url
             # SQLite — pass through as-is (uses aiosqlite driver)
             if url.startswith("sqlite"):
                 return url
-            # PostgreSQL — ensure asyncpg driver is specified
-            if not url.startswith("postgresql+asyncpg://"):
-                return url.replace("postgresql://", "postgresql+asyncpg://")
+            # Convert postgres:// or postgresql:// to postgresql+asyncpg://
+            if url.startswith("postgres://"):
+                url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+            elif url.startswith("postgresql://"):
+                url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            elif not url.startswith("postgresql+asyncpg://"):
+                url = "postgresql+asyncpg://" + url
+            # Remove unsupported query parameters for asyncpg like sslmode
+            if "?" in url:
+                base, query = url.split("?", 1)
+                params = [p for p in query.split("&") if not p.startswith("sslmode=")]
+                url = f"{base}?{'&'.join(params)}" if params else base
             return url
         return (
             f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
