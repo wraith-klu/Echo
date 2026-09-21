@@ -10,6 +10,7 @@ Priority:
 """
 import os
 import time
+import warnings
 import concurrent.futures
 
 from app.core.logger import logger
@@ -110,11 +111,14 @@ class TranslationService:
                 use_safetensors=False,
             )
             # PyTorch dynamic quantization (Linear -> qint8) for fast CPU inference and lower RAM
-            self.model = torch.quantization.quantize_dynamic(
-                raw_model,
-                {torch.nn.Linear},
-                dtype=torch.qint8,
-            )
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=DeprecationWarning)
+                warnings.filterwarnings("ignore", category=UserWarning)
+                self.model = torch.quantization.quantize_dynamic(  # type: ignore[attr-defined] # noqa: PyDeprecation
+                    raw_model,
+                    {torch.nn.Linear},
+                    dtype=torch.qint8,
+                )
             self.model.eval()
             self._nllb_ready = True
             logger.info(f"TranslationService: NLLB-200 loaded and ready in {time.time() - t0:.2f}s (int8 quantized).")
