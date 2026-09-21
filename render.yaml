@@ -5,6 +5,7 @@ services:
     dockerfilePath: backend/Dockerfile
     dockerContext: backend
     plan: free          # Free tier: 512 MB RAM, shared CPU
+    pythonVersion: "3.11.9"
     healthCheckPath: /health
     autoDeploy: true
     envVars:
