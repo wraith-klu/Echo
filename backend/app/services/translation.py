@@ -58,7 +58,7 @@ class TranslationService:
 
         if self._api_key:
             try:
-                import google.generativeai as genai
+                import google.generativeai as genai  # type: ignore
                 genai.configure(api_key=self._api_key)
                 self._genai = genai
                 self._active_model_name = self._candidate_models[0]
