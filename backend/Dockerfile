@@ -2,6 +2,7 @@
 # Stage 1: builder
 # Installs all Python dependencies into a clean prefix.
 # Keeps the final image free from build tools (gcc, curl, etc.).
+# NOTE: torch/transformers removed — translation uses Gemini Flash API instead.
 # ============================================================================
 FROM python:3.11-slim AS builder
 
@@ -48,10 +49,9 @@ FROM python:3.11-slim AS runtime
 # --- Environment ---------------------------------------------------------
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    # Model cache dirs — these will be bind-mounted as a Docker volume
-    HF_HOME="/model_cache/huggingface" \
-    TORCH_HOME="/model_cache/torch" \
-    PIPER_CACHE="/model_cache/piper" \
+    # Piper TTS & HF model cache (will download on first request, not at startup)
+    HF_HOME="/tmp/huggingface" \
+    PIPER_CACHE="/tmp/piper" \
     # Disable Hugging Face Xet CDN (requires auth even for public models)
     HF_HUB_DISABLE_XET=1
 
@@ -73,30 +73,23 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 WORKDIR /app
 COPY . /app/
 
-# --- Model cache volume mount point --------------------------------------
-# AI models are NOT baked into the image (they are 2-10 GB).
-# They are downloaded at first startup and cached in this volume.
-# On subsequent container restarts the volume already contains the models.
-VOLUME ["/model_cache"]
-
-# --- Upload directory mount point ----------------------------------------
-# Audio files uploaded from ESP32 or via REST are persisted here.
-VOLUME ["/app/audio_uploads"]
-
-# --- Non-root user for security ------------------------------------------
-RUN mkdir -p /model_cache /app/audio_uploads \
+# --- Create writable dirs for runtime cache & uploads -------------------
+# On Render free tier there is no persistent disk; models re-download on each
+# cold start. The /tmp directory is always writable even as non-root.
+RUN mkdir -p /tmp/huggingface /tmp/piper /app/audio_uploads \
     && addgroup --system appgroup \
     && adduser --system --ingroup appgroup appuser \
-    && chown -R appuser:appgroup /app /model_cache
+    && chown -R appuser:appgroup /app
+
 USER appuser
 
 # --- Port ----------------------------------------------------------------
 EXPOSE 8000
 
 # --- Healthcheck ---------------------------------------------------------
-HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
 
 # --- Entrypoint ----------------------------------------------------------
-# Dynamic $PORT support for Render / Heroku / Container clouds (defaults to 8000)
+# Dynamic $PORT support for Render (defaults to 8000)
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1 --log-level info"]

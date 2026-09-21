@@ -5,7 +5,7 @@ from dataclasses import dataclass, asdict
 
 from app.core.logger import logger
 from app.services.language_detection import LanguageDetectionService
-from app.services.translation import NLLB_LANG_MAP
+from app.services.translation import NLLB_LANG_MAP  # alias for LANG_NAME_MAP
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession

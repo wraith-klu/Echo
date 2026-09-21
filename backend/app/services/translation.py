@@ -1,91 +1,73 @@
 """
-TranslationService: NLLB-200 based multilingual translation service.
+TranslationService: Gemini Flash API-based multilingual translation service.
 
-Uses facebook/nllb-200-distilled-600M with PyTorch dynamic quantization
-for CPU-efficient many-to-many translation across 200+ languages.
+Uses Google Gemini 1.5 Flash (free-tier friendly) for many-to-many translation
+instead of the local 2GB NLLB-200 model, enabling deployment on Render's free tier
+with only 512 MB RAM.
+
+Falls back gracefully if GEMINI_API_KEY is not set.
 """
 import os
 import time
 
-# Disable Hugging Face Xet Storage CDN (requires auth even for public models).
-# Without this, pytorch_model.bin download stalls at 0 bytes.
-os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
-
-import torch
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from app.core.logger import logger
 
 # ──────────────────────────────────────────────────────────────
-# NLLB language code mapping from ISO 639-1 → NLLB BCP-47 codes
+# ISO 639-1 → full language name for Gemini prompt
 # ──────────────────────────────────────────────────────────────
-NLLB_LANG_MAP: dict[str, str] = {
-    "en": "eng_Latn",
-    "hi": "hin_Deva",   # Hindi
-    "es": "spa_Latn",
-    "fr": "fra_Latn",
-    "de": "deu_Latn",
-    "it": "ita_Latn",
-    "pt": "por_Latn",
-    "zh": "zho_Hans",
-    "ja": "jpn_Jpan",
-    "ko": "kor_Hang",
-    "ru": "rus_Cyrl",
-    "ar": "arb_Arab",   # Arabic
+LANG_NAME_MAP: dict[str, str] = {
+    "en": "English",
+    "hi": "Hindi",
+    "es": "Spanish",
+    "fr": "French",
+    "de": "German",
+    "it": "Italian",
+    "pt": "Portuguese",
+    "zh": "Chinese (Simplified)",
+    "ja": "Japanese",
+    "ko": "Korean",
+    "ru": "Russian",
+    "ar": "Arabic",
 }
 
-MODEL_NAME = "facebook/nllb-200-distilled-600M"
-
-# Max tokens to translate per call (NLLB's max is 1024 tokens).
-# Longer text is split into sentences/chunks.
-MAX_INPUT_TOKENS = 512
+# Keep NLLB_LANG_MAP as an alias so pipeline.py import doesn't break
+NLLB_LANG_MAP = LANG_NAME_MAP
 
 
 class TranslationService:
     """
-    Wraps a single NLLB-200-distilled-600M model instance.
-    Loaded once at startup; shared across all requests.
+    Wraps Google Gemini Flash API for lightweight cloud-based translation.
+    No local model weights — ideal for free-tier hosting with limited RAM.
     """
 
     def __init__(self):
-        self.tokenizer = None
-        self.model = None
-        self._load_model()
-
-    def _load_model(self):
-        """Download (first run) and load the NLLB model + tokenizer."""
-        logger.info(f"Loading NLLB tokenizer: {MODEL_NAME} ...")
-        t0 = time.time()
-        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-        logger.info(f"Tokenizer loaded in {time.time() - t0:.2f}s")
-
-        logger.info(f"Loading NLLB model: {MODEL_NAME} (FP32 first, then quantize) ...")
-        t1 = time.time()
-        raw_model = AutoModelForSeq2SeqLM.from_pretrained(
-            MODEL_NAME,
-            use_safetensors=False,   # repo only has pytorch_model.bin
-        )
-
-        # Dynamic quantisation: int8 weights for all Linear layers.
-        # Cuts memory by ~50% and speeds up CPU inference 2-3x.
-        logger.info("Applying torch dynamic quantization (Linear → qint8) ...")
-        self.model = torch.quantization.quantize_dynamic(
-            raw_model,
-            {torch.nn.Linear},
-            dtype=torch.qint8,
-        )
-        self.model.eval()
-        logger.info(
-            f"NLLB model ready (quantized) in {time.time() - t1:.2f}s total."
-        )
+        self._api_key = os.environ.get("GEMINI_API_KEY", "")
+        self._client = None
+        if self._api_key:
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=self._api_key)
+                self._client = genai.GenerativeModel("gemini-1.5-flash")
+                logger.info("TranslationService: Gemini Flash client initialized.")
+            except ImportError:
+                logger.warning(
+                    "google-generativeai package not installed. "
+                    "Translation will echo input text. Install with: pip install google-generativeai"
+                )
+        else:
+            logger.warning(
+                "GEMINI_API_KEY not set. Translation will echo input text. "
+                "Set GEMINI_API_KEY in environment to enable real translation."
+            )
 
     # ──────────────────────────────────────────────────────────
-    # Public API
+    # Public API (same interface as old NLLB TranslationService)
     # ──────────────────────────────────────────────────────────
 
     @staticmethod
     def get_nllb_code(iso_code: str) -> str | None:
-        """Convert an ISO 639-1 code to the NLLB language tag, or None."""
-        return NLLB_LANG_MAP.get(iso_code.lower().strip())
+        """Return the language name for an ISO 639-1 code, or None if unsupported."""
+        return LANG_NAME_MAP.get(iso_code.lower().strip())
 
     def translate_text(
         self,
@@ -94,7 +76,7 @@ class TranslationService:
         target_lang: str,
     ) -> dict:
         """
-        Translate `text` from `source_lang` to `target_lang`.
+        Translate `text` from `source_lang` to `target_lang` via Gemini Flash API.
 
         Args:
             text:        The transcribed source text.
@@ -106,9 +88,10 @@ class TranslationService:
               "translated_text": str,
               "source_lang":     str,
               "target_lang":     str,
-              "source_nllb":     str,
-              "target_nllb":     str,
+              "source_name":     str,
+              "target_name":     str,
               "latency_sec":     float,
+              "method":          str,
             }
 
         Raises:
@@ -119,73 +102,65 @@ class TranslationService:
         if not clean_text:
             raise ValueError("Translation input text is empty.")
 
-        src_nllb = self.get_nllb_code(source_lang)
-        tgt_nllb = self.get_nllb_code(target_lang)
+        src_name = LANG_NAME_MAP.get(source_lang.lower().strip())
+        tgt_name = LANG_NAME_MAP.get(target_lang.lower().strip())
 
-        if src_nllb is None:
+        if src_name is None:
             raise ValueError(
                 f"Unsupported source language '{source_lang}'. "
-                f"Supported: {sorted(NLLB_LANG_MAP.keys())}"
+                f"Supported: {sorted(LANG_NAME_MAP.keys())}"
             )
-        if tgt_nllb is None:
+        if tgt_name is None:
             raise ValueError(
                 f"Unsupported target language '{target_lang}'. "
-                f"Supported: {sorted(NLLB_LANG_MAP.keys())}"
+                f"Supported: {sorted(LANG_NAME_MAP.keys())}"
             )
 
         if source_lang == target_lang:
-            # No-op: return original text instantly
             return {
                 "translated_text": clean_text,
                 "source_lang": source_lang,
                 "target_lang": target_lang,
-                "source_nllb": src_nllb,
-                "target_nllb": tgt_nllb,
+                "source_name": src_name,
+                "target_name": tgt_name,
                 "latency_sec": 0.0,
+                "method": "no-op",
             }
 
-        logger.info(
-            f"Translating '{source_lang}' → '{target_lang}' | "
-            f"text length: {len(clean_text)} chars"
-        )
-
-        # ── 2. Tokenise with the source language set ──────────
         t0 = time.time()
-        self.tokenizer.src_lang = src_nllb
-        inputs = self.tokenizer(
-            clean_text,
-            return_tensors="pt",
-            max_length=MAX_INPUT_TOKENS,
-            truncation=True,
-        )
 
-        # ── 3. Generate ───────────────────────────────────────
-        with torch.no_grad():
-            forced_bos_token_id = self.tokenizer.convert_tokens_to_ids(tgt_nllb)
-            generated_tokens = self.model.generate(
-                **inputs,
-                forced_bos_token_id=forced_bos_token_id,
-                max_length=MAX_INPUT_TOKENS,
-                num_beams=4,           # beam search for quality
-                early_stopping=True,
-            )
-
-        # ── 4. Decode ─────────────────────────────────────────
-        translated = self.tokenizer.batch_decode(
-            generated_tokens, skip_special_tokens=True
-        )[0]
+        # ── 2. Attempt Gemini API translation ─────────────────
+        if self._client:
+            try:
+                prompt = (
+                    f"Translate the following text from {src_name} to {tgt_name}. "
+                    f"Output ONLY the translated text with no explanations, labels, or extra commentary.\n\n"
+                    f"{clean_text}"
+                )
+                response = self._client.generate_content(prompt)
+                translated = response.text.strip()
+                method = "gemini-1.5-flash"
+                logger.info(
+                    f"Gemini translation '{source_lang}'→'{target_lang}' done in "
+                    f"{time.time()-t0:.2f}s"
+                )
+            except Exception as api_err:
+                logger.warning(f"Gemini API translation failed: {api_err}. Falling back to echo.")
+                translated = clean_text
+                method = "fallback-echo"
+        else:
+            # No API key — echo source text as placeholder
+            translated = clean_text
+            method = "fallback-echo"
 
         latency = round(time.time() - t0, 3)
-        logger.info(
-            f"Translation complete in {latency}s | "
-            f"output: \"{translated[:80]}{'...' if len(translated) > 80 else ''}\""
-        )
 
         return {
             "translated_text": translated,
             "source_lang": source_lang,
             "target_lang": target_lang,
-            "source_nllb": src_nllb,
-            "target_nllb": tgt_nllb,
+            "source_name": src_name,
+            "target_name": tgt_name,
             "latency_sec": latency,
+            "method": method,
         }

@@ -4,7 +4,7 @@ services:
     runtime: docker
     dockerfilePath: backend/Dockerfile
     dockerContext: backend
-    plan: starter
+    plan: free          # Free tier: 512 MB RAM, shared CPU
     healthCheckPath: /health
     autoDeploy: true
     envVars:
@@ -12,13 +12,19 @@ services:
         value: "Echo Speech Translation Backend"
       - key: BACKEND_CORS_ORIGINS
         value: "*"
+
+      # Whisper: 'tiny' (~39 MB model, ~200 MB RAM) — free-tier safe
       - key: WHISPER_MODEL_NAME
-        value: "base"
-      - key: TRANSLATION_MODEL_NAME
-        value: "facebook/nllb-200-distilled-600M"
-      - key: TTS_MODEL_NAME
-        value: "suno/bark-small"
-      - key: HF_HUB_DISABLE_XET
-        value: "1"
+        value: "tiny"
+
+      # Gemini Flash API key — set this in Render dashboard (keep secret!)
+      - key: GEMINI_API_KEY
+        sync: false
+
+      # Database — set full PostgreSQL URL in Render dashboard
       - key: DATABASE_URL
         sync: false
+
+      # Hugging Face: disable Xet CDN (requires auth even for public models)
+      - key: HF_HUB_DISABLE_XET
+        value: "1"

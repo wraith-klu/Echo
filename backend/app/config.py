@@ -55,10 +55,11 @@ class Settings(BaseSettings):
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 
-    # Placeholders for future AI model paths/keys
-    WHISPER_MODEL_NAME: str = "base"
-    TRANSLATION_MODEL_NAME: str = "facebook/nllb-200-distilled-600M"
-    TTS_MODEL_NAME: str = "suno/bark-small"
+    # AI model configuration
+    # Use 'tiny' on free-tier hosts (512 MB RAM); upgrade to 'base' or 'small' on paid plans
+    WHISPER_MODEL_NAME: str = "tiny"
+    # Gemini Flash API key for cloud-based translation (no local model weights required)
+    GEMINI_API_KEY: str = ""
 
     model_config = SettingsConfigDict(
         case_sensitive=True,
