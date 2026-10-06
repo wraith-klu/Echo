@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import { Check, Loader2, AlertCircle, AlertTriangle } from 'lucide-react'
 
 export const PipelineVisualizer = ({ isProcessing, wallTimeSec, pipelineResult }) => {
   const [currentStep, setCurrentStep] = useState(5)
 
-  // Emulate visual progress across the 5 pipeline stages while processing
   useEffect(() => {
     if (!isProcessing) {
       return
@@ -37,28 +35,36 @@ export const PipelineVisualizer = ({ isProcessing, wallTimeSec, pipelineResult }
 
   return (
     <div className="pipeline-visualizer">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--app-ink)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           {isProcessing ? (
             <>
-              <Loader2 size={16} className="spin" color="#818cf8" />
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="spin" style={{ color: 'var(--app-accent)' }}>
+                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+              </svg>
               <span>Processing Translation Pipeline…</span>
             </>
           ) : isPartial ? (
             <>
-              <AlertTriangle size={16} color="#fbbf24" />
-              <span style={{ color: '#fbbf24' }}>Pipeline Complete (Partial Success)</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--state-warning)' }}>
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <span style={{ color: 'var(--state-warning)' }}>Pipeline Complete (Partial Success)</span>
             </>
           ) : (
             <>
-              <Check size={16} color="#34d399" />
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--state-success)' }}>
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
               <span>Pipeline Complete</span>
             </>
           )}
         </div>
 
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-          Elapsed: <span style={{ color: '#fbbf24', fontWeight: 700 }}>{wallTimeSec.toFixed(2)}s</span>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--app-ink-subtle)' }}>
+          Wall Time: <span style={{ color: 'var(--app-ink)', fontWeight: 600 }}>{wallTimeSec.toFixed(2)}s</span>
         </div>
       </div>
 
@@ -69,42 +75,41 @@ export const PipelineVisualizer = ({ isProcessing, wallTimeSec, pipelineResult }
           const isActive = isProcessing && currentStep === stepNum
           const hasError = !isProcessing && step.hasError
 
+          let stepClass = 'pipeline-step'
+          if (isActive) stepClass += ' active'
+          if (isDone) stepClass += ' completed'
+          if (hasError) stepClass += ' error'
+
           return (
             <React.Fragment key={idx}>
-              <div className={`pipeline-step ${isActive ? 'active' : ''} ${isDone ? 'completed' : ''} ${hasError ? 'error' : ''}`}>
-                <div
-                  className="step-circle"
-                  style={hasError ? { background: 'rgba(244, 63, 94, 0.2)', borderColor: '#f43f5e', color: '#fb7185' } : undefined}
-                >
+              <div className={stepClass}>
+                <div className="step-circle">
                   {hasError ? (
-                    <AlertCircle size={16} />
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--state-danger)' }}>
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
                   ) : isDone ? (
-                    <Check size={16} />
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--state-success)' }}>
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
                   ) : isActive ? (
-                    <Loader2 size={16} className="spin" />
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="spin" style={{ color: 'var(--app-accent)' }}>
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                    </svg>
                   ) : (
-                    stepNum
+                    <span>{stepNum}</span>
                   )}
                 </div>
-                <div className="step-label" style={hasError ? { color: '#fb7185' } : undefined}>
+                <div className="step-label">
                   {step.label}
                 </div>
-                <div style={{ fontSize: '0.68rem', color: hasError ? '#fb7185' : 'var(--text-muted)' }}>
+                <div style={{ fontSize: '11px', color: 'var(--app-ink-subtle)', fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
                   {hasError ? 'Failed' : step.desc}
                 </div>
               </div>
-              {idx < steps.length - 1 && (
-                <div
-                  className="step-line"
-                  style={{
-                    backgroundColor: isDone
-                      ? hasError
-                        ? 'rgba(244, 63, 94, 0.4)'
-                        : 'rgba(16, 185, 129, 0.4)'
-                      : 'var(--border-subtle)',
-                  }}
-                />
-              )}
+              {idx < steps.length - 1 && <div className="step-line" />}
             </React.Fragment>
           )
         })}
@@ -112,3 +117,4 @@ export const PipelineVisualizer = ({ isProcessing, wallTimeSec, pipelineResult }
     </div>
   )
 }
+export default PipelineVisualizer

@@ -1,0 +1,7 @@
+{
+  "venvPath": "p:/CapsTron Project - 1/backend",
+  "venv": ".venv",
+  "pythonVersion": "3.10",
+  "extraPaths": ["p:/CapsTron Project - 1/backend"],
+  "reportMissingImports": "none"
+}

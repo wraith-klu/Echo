@@ -1,6 +1,5 @@
 import React from 'react'
 import { SOURCE_LANGUAGES, TARGET_LANGUAGES } from '../utils/constants.js'
-import { ArrowLeftRight, Sparkles } from 'lucide-react'
 
 export const LanguageSelector = ({
   sourceLang,
@@ -30,21 +29,21 @@ export const LanguageSelector = ({
 
   return (
     <section aria-labelledby="lang-config-title">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-        <h2 id="lang-config-title" style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>
-          🔧 Translation Configuration
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <h2 id="lang-config-title" className="section-title">
+          Configuration &amp; Pairings
         </h2>
         <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-          <button type="button" className="badge-tag" style={{ cursor: 'pointer', border: 'none' }} onClick={() => applyPair('auto', 'hi')}>
+          <button type="button" className="badge-tag" style={{ cursor: 'pointer' }} onClick={() => applyPair('auto', 'hi')}>
             Auto → 🇮🇳 Hindi
           </button>
-          <button type="button" className="badge-tag" style={{ cursor: 'pointer', border: 'none' }} onClick={() => applyPair('en', 'hi')}>
+          <button type="button" className="badge-tag" style={{ cursor: 'pointer' }} onClick={() => applyPair('en', 'hi')}>
             🇬🇧 English → 🇮🇳 Hindi
           </button>
-          <button type="button" className="badge-tag" style={{ cursor: 'pointer', border: 'none' }} onClick={() => applyPair('hi', 'en')}>
+          <button type="button" className="badge-tag" style={{ cursor: 'pointer' }} onClick={() => applyPair('hi', 'en')}>
             🇮🇳 Hindi → 🇬🇧 English
           </button>
-          <button type="button" className="badge-tag" style={{ cursor: 'pointer', border: 'none' }} onClick={() => applyPair('auto', 'es')}>
+          <button type="button" className="badge-tag" style={{ cursor: 'pointer' }} onClick={() => applyPair('auto', 'es')}>
             Auto → 🇪🇸 Spanish
           </button>
         </div>
@@ -54,8 +53,8 @@ export const LanguageSelector = ({
         {/* Source Language Card */}
         <div className="lang-card lang-card-source">
           <div className="lang-header">
-            <span className="lang-label">🎤 Source Language</span>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Input Audio</span>
+            <span className="lang-label">Source Language</span>
+            <span style={{ fontSize: '12px', color: 'var(--app-ink-subtle)', fontFamily: 'var(--font-sans)' }}>Input Audio</span>
           </div>
           <select
             id="source-language-select"
@@ -72,7 +71,7 @@ export const LanguageSelector = ({
           <div>
             <span className="lang-pill">
               {currentSource?.flag} {currentSource?.name}
-              {sourceLang === 'auto' ? ' (Whisper Auto-Detection)' : ' (Pre-Selected)'}
+              {sourceLang === 'auto' ? ' (Whisper Auto-Detect)' : ' (Pre-Selected)'}
             </span>
           </div>
         </div>
@@ -87,16 +86,21 @@ export const LanguageSelector = ({
             title="Swap source and target languages"
             aria-label="Swap Languages"
           >
-            <ArrowLeftRight size={18} />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m16 3 4 4-4 4" />
+              <path d="M20 7H4" />
+              <path d="m8 21-4-4 4-4" />
+              <path d="M4 17h16" />
+            </svg>
           </button>
         </div>
 
         {/* Target Language Card */}
         <div className={`lang-card lang-card-target ${isHindiTarget ? 'is-hindi' : ''}`}>
           <div className="lang-header">
-            <span className="lang-label">🎯 Target Language</span>
-            <span style={{ fontSize: '0.78rem', color: isHindiTarget ? '#fbbf24' : 'var(--text-muted)' }}>
-              {isHindiTarget ? '✨ High Priority Target' : 'NLLB-200 + TTS'}
+            <span className="lang-label">Target Language</span>
+            <span style={{ fontSize: '12px', color: isHindiTarget ? 'var(--app-accent)' : 'var(--app-ink-subtle)', fontFamily: 'var(--font-sans)' }}>
+              {isHindiTarget ? 'Primary Model Pair' : 'NLLB-200 + TTS'}
             </span>
           </div>
           <select
@@ -116,8 +120,11 @@ export const LanguageSelector = ({
               {currentTarget?.flag} {currentTarget?.name}
             </span>
             {isHindiTarget && (
-              <span style={{ fontSize: '0.76rem', color: '#fbbf24', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                <Sparkles size={13} /> Devanagari script enabled
+              <span style={{ fontSize: '12px', color: 'var(--app-accent)', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z" />
+                </svg>
+                Devanagari enabled
               </span>
             )}
           </div>
@@ -126,3 +133,4 @@ export const LanguageSelector = ({
     </section>
   )
 }
+export default LanguageSelector

@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { ENV_PRESETS } from '../utils/constants.js'
-import { Activity, Gauge, Server, RefreshCw } from 'lucide-react'
 
 export const Sidebar = ({
   baseUrl,
@@ -37,7 +36,12 @@ export const Sidebar = ({
       <div className="glass-card">
         <div className="card-title-row">
           <span className="card-title">
-            <Server size={16} color="#6366f1" />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--app-accent)' }}>
+              <rect width="20" height="8" x="2" y="2" rx="2" ry="2" />
+              <rect width="20" height="8" x="2" y="14" rx="2" ry="2" />
+              <line x1="6" y1="6" x2="6.01" y2="6" />
+              <line x1="6" y1="18" x2="6.01" y2="18" />
+            </svg>
             Backend Environment
           </span>
         </div>
@@ -68,8 +72,8 @@ export const Sidebar = ({
         ) : (
           <div
             style={{
-              fontSize: '0.75rem',
-              color: 'var(--text-muted)',
+              fontSize: '12px',
+              color: 'var(--app-ink-subtle)',
               marginTop: '0.45rem',
               fontFamily: 'var(--font-mono)',
               wordBreak: 'break-all',
@@ -79,14 +83,19 @@ export const Sidebar = ({
           </div>
         )}
 
-        <div style={{ marginTop: '1rem' }}>
+        <div style={{ marginTop: '0.9rem' }}>
           <button
             id="ping-backend-btn"
             className="btn btn-secondary btn-w100"
             onClick={onPing}
             disabled={isPinging}
           >
-            <RefreshCw size={14} className={isPinging ? 'spin' : ''} />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isPinging ? 'spin' : ''}>
+              <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+              <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+              <path d="M16 21h5v-5" />
+            </svg>
             <span>{isPinging ? 'Checking…' : 'Ping Backend'}</span>
           </button>
         </div>
@@ -95,22 +104,23 @@ export const Sidebar = ({
           <div
             style={{
               marginTop: '0.75rem',
-              fontSize: '0.8rem',
-              padding: '0.5rem 0.75rem',
-              borderRadius: '8px',
+              fontSize: '13px',
+              padding: '8px 12px',
+              borderRadius: '7px',
               backgroundColor: pingResult.error
-                ? 'rgba(244, 63, 94, 0.12)'
-                : 'rgba(16, 185, 129, 0.12)',
+                ? 'rgba(248, 113, 113, 0.12)'
+                : 'rgba(52, 211, 153, 0.12)',
               border: `1px solid ${
-                pingResult.error ? 'rgba(244, 63, 94, 0.3)' : 'rgba(16, 185, 129, 0.3)'
+                pingResult.error ? 'var(--state-danger)' : 'var(--state-success)'
               }`,
-              color: pingResult.error ? '#fb7185' : '#34d399',
+              color: pingResult.error ? 'var(--state-danger)' : 'var(--state-success)',
+              fontFamily: 'var(--font-mono)',
             }}
           >
             {pingResult.error ? (
-              <div>❌ {pingResult.error}</div>
+              <div>{pingResult.error}</div>
             ) : (
-              <div>✅ Online · {pingResult.latencyMs} ms</div>
+              <div>Online · {pingResult.latencyMs} ms</div>
             )}
           </div>
         )}
@@ -120,15 +130,17 @@ export const Sidebar = ({
       <div className="glass-card">
         <div className="card-title-row">
           <span className="card-title">
-            <Activity size={16} color="#06b6d4" />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--app-accent)' }}>
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+            </svg>
             Pipeline Subsystems
           </span>
         </div>
 
         <div className="services-list">
           <div className="service-item">
-            <span className="service-name">Ingestion & VAD</span>
-            <span className="status-badge status-ready">ready</span>
+            <span className="service-name">Ingestion &amp; VAD</span>
+            <span className="status-badge status-ready">Ready</span>
           </div>
           <div className="service-item">
             <span className="service-name">Whisper ASR</span>
@@ -137,7 +149,7 @@ export const Sidebar = ({
                 servicesStatus?.asr === 'ready' ? 'status-ready' : 'status-pending'
               }`}
             >
-              {servicesStatus?.asr || 'ready'}
+              {servicesStatus?.asr || 'Ready'}
             </span>
           </div>
           <div className="service-item">
@@ -147,7 +159,7 @@ export const Sidebar = ({
                 servicesStatus?.translation === 'ready' ? 'status-ready' : 'status-pending'
               }`}
             >
-              {servicesStatus?.translation || 'ready'}
+              {servicesStatus?.translation || 'Ready'}
             </span>
           </div>
           <div className="service-item">
@@ -157,7 +169,7 @@ export const Sidebar = ({
                 servicesStatus?.tts === 'ready' ? 'status-ready' : 'status-pending'
               }`}
             >
-              {servicesStatus?.tts || 'ready'}
+              {servicesStatus?.tts || 'Ready'}
             </span>
           </div>
         </div>
@@ -167,40 +179,44 @@ export const Sidebar = ({
       <div className="glass-card">
         <div className="card-title-row">
           <span className="card-title">
-            <Gauge size={16} color="#f59e0b" />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--app-accent)' }}>
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 14 14" />
+            </svg>
             Last Run Latency
           </span>
         </div>
 
         {lastLatencies ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.82rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#fbbf24', fontWeight: 700 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '13px', fontFamily: 'var(--font-mono)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--app-accent)', fontWeight: 600 }}>
               <span>Total Wall-Clock:</span>
               <span>{(lastLatencies.total_sec ?? 0).toFixed(2)}s</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--app-ink-muted)' }}>
               <span>Whisper ASR:</span>
               <span>{(lastLatencies.asr_sec ?? 0).toFixed(2)}s</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--app-ink-muted)' }}>
               <span>NLLB-200 MT:</span>
               <span>{(lastLatencies.translation_sec ?? 0).toFixed(2)}s</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--app-ink-muted)' }}>
               <span>Piper TTS:</span>
               <span>{(lastLatencies.tts_sec ?? 0).toFixed(2)}s</span>
             </div>
           </div>
         ) : (
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: '13px', color: 'var(--app-ink-subtle)' }}>
             No translation executed in current session yet.
           </div>
         )}
       </div>
 
-      <div style={{ textAlign: 'center', padding: '0.5rem', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-        CapsTron v1.0 · ESP32 + FastAPI + NLLB-200
+      <div style={{ textAlign: 'center', padding: '0.5rem', fontSize: '11px', color: 'var(--app-ink-subtle)', letterSpacing: '0.04em' }}>
+        Echo Speech Translation Portal
       </div>
     </aside>
   )
 }
+export default Sidebar

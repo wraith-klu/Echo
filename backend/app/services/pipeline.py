@@ -118,7 +118,7 @@ class PipelineOrchestrator:
             )
         latencies["lid_sec"] = round(time.time() - t0, 4)
         
-        source_lang = lid_res["detected_language"]
+        source_lang = str(lid_res.get("detected_language") or "")
         is_source_supported = LanguageDetectionService.is_language_supported(source_lang)
         
         transcription_payload = {

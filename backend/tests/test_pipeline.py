@@ -141,6 +141,7 @@ class TestPipelineIntegration:
     Runs the complete pipeline with real models on a real audio file.
     Requires: ENABLE_INTEGRATION_TESTS=1 and models already downloaded.
     """
+    ml_models: dict = {}
 
     @pytest.fixture(scope="class", autouse=True)
     def real_models(self):
@@ -167,6 +168,7 @@ class TestPipelineIntegration:
         )
         assert result.status in ("success", "partial_success")
         print(f"\n[E2E] Status: {result.status}")
-        print(f"[E2E] Text: {result.transcription.get('text', '')}")
+        trans_text = result.transcription.get('text', '') if result.transcription else ''
+        print(f"[E2E] Text: {trans_text}")
         print(f"[E2E] Translated: {result.translation.get('translated_text', '') if result.translation else 'N/A'}")
         print(f"[E2E] Latencies: {result.latencies}")

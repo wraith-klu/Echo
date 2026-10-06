@@ -257,6 +257,8 @@ class TranslationService:
             race_models = [m for m in models_to_try if m][:2]
 
             def _query_model(model_name: str) -> tuple[str, str]:
+                if not self._genai:
+                    raise RuntimeError("Gemini client not initialized")
                 client = self._genai.GenerativeModel(model_name)
                 resp = client.generate_content(prompt)
                 if resp and resp.text:

@@ -18,10 +18,12 @@ It directly instantiates TranslationService and validates:
 import sys
 import traceback
 
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-if hasattr(sys.stderr, "reconfigure"):
-    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+reconfig_out = getattr(sys.stdout, "reconfigure", None)
+if callable(reconfig_out):
+    reconfig_out(encoding="utf-8", errors="replace")
+reconfig_err = getattr(sys.stderr, "reconfigure", None)
+if callable(reconfig_err):
+    reconfig_err(encoding="utf-8", errors="replace")
 
 def separator(title: str):
     width = 60
