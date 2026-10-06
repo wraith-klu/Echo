@@ -36,8 +36,8 @@ async def websocket_endpoint(websocket: WebSocket):
 async def websocket_audio_endpoint(
     websocket: WebSocket,
     device_id: str = "ESP32_Device",
-    source_language: str = None,
-    target_language: str = None
+    source_language: str | None = None,
+    target_language: str | None = None
 ):
     """
     WebSocket endpoint for receiving real-time audio chunk streams from IoT/ESP32 devices.
@@ -126,7 +126,7 @@ async def websocket_audio_endpoint(
             await websocket.send_json(response_payload)
             
             # Frame 2: Send binary WAV audio frame if TTS was synthesized
-            if audio_follows:
+            if audio_follows and result.tts:
                 tts_file_path = result.tts["file_path"]
                 try:
                     with open(tts_file_path, "rb") as f:

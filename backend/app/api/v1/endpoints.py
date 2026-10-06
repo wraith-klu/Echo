@@ -49,7 +49,8 @@ async def upload_audio_file(
 
     # Naming convention: device_id + timestamp + original extension
     timestamp = int(time.time() * 1000)
-    _, ext = os.path.splitext(file.filename)
+    raw_filename = file.filename or "upload.wav"
+    _, ext = os.path.splitext(raw_filename)
     if not ext:
         ext = ".wav"  # Default to WAV extension if none provided
     
@@ -146,7 +147,8 @@ async def transcribe_audio_endpoint(
         # Direct upload flow
         os.makedirs(UPLOAD_DIR, exist_ok=True)
         timestamp = int(time.time() * 1000)
-        _, ext = os.path.splitext(file.filename)
+        raw_file_name = file.filename or "audio.wav"
+        _, ext = os.path.splitext(raw_file_name)
         if not ext:
             ext = ".wav"
         temp_name = f"direct_transcribe_{timestamp}{ext}"
@@ -276,8 +278,8 @@ async def list_devices(
                 "device_id": d.device_id,
                 "name": d.name,
                 "description": d.description,
-                "registered_at": d.registered_at.isoformat() if d.registered_at else None,
-                "last_seen_at": d.last_seen_at.isoformat() if d.last_seen_at else None,
+                "registered_at": d.registered_at.isoformat() if getattr(d, "registered_at", None) is not None else None,
+                "last_seen_at": d.last_seen_at.isoformat() if getattr(d, "last_seen_at", None) is not None else None,
                 "is_active": d.is_active,
                 "meta": d.meta,
             }
