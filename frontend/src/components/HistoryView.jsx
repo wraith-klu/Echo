@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { fetchHistory } from '../utils/api.js'
 import { LANG_FLAGS } from '../utils/constants.js'
-import { History, RefreshCw, Search, ArrowRight, Clock, CheckCircle2 } from 'lucide-react'
 
 export const HistoryView = ({ baseUrl }) => {
   const [items, setItems] = useState([])
@@ -45,22 +44,25 @@ export const HistoryView = ({ baseUrl }) => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.8rem' }}>
         <div>
-          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-            📜 Translation Session History
+          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '24px', fontWeight: 400, color: 'var(--app-ink)' }}>
+            Translation Session History
           </h2>
-          <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-            Recorded speech utterances stored in PostgreSQL database
+          <div style={{ fontSize: '13px', color: 'var(--app-ink-subtle)', marginTop: '2px' }}>
+            Persisted speech utterances and latency telemetry
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <div style={{ position: 'relative' }}>
-            <Search size={14} color="#64748b" style={{ position: 'absolute', left: '10px', top: '10px' }} />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '11px', top: '13px', color: 'var(--app-ink-subtle)' }}>
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
             <input
               type="text"
               placeholder="Search transcriptions…"
               className="input-text"
-              style={{ paddingLeft: '2rem', marginTop: 0, width: '220px' }}
+              style={{ paddingLeft: '2.1rem', marginTop: 0, width: '220px' }}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -73,7 +75,12 @@ export const HistoryView = ({ baseUrl }) => {
             onClick={loadData}
             disabled={isLoading}
           >
-            <RefreshCw size={14} className={isLoading ? 'spin' : ''} />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isLoading ? 'spin' : ''}>
+              <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+              <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+              <path d="M16 21h5v-5" />
+            </svg>
             <span>{isLoading ? 'Loading…' : 'Refresh'}</span>
           </button>
         </div>
@@ -83,11 +90,11 @@ export const HistoryView = ({ baseUrl }) => {
         <div
           style={{
             padding: '1rem',
-            borderRadius: '12px',
-            backgroundColor: 'rgba(244, 63, 94, 0.12)',
-            border: '1px solid rgba(244, 63, 94, 0.3)',
-            color: '#fb7185',
-            fontSize: '0.88rem',
+            borderRadius: '8px',
+            backgroundColor: 'rgba(248, 113, 113, 0.12)',
+            border: '1px solid var(--state-danger)',
+            color: 'var(--state-danger)',
+            fontSize: '13px',
           }}
         >
           Failed to load history from backend: {error}
@@ -96,9 +103,12 @@ export const HistoryView = ({ baseUrl }) => {
 
       {filteredItems.length === 0 && !isLoading && !error && (
         <div className="glass-card" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-          <History size={40} color="#64748b" style={{ margin: '0 auto 0.8rem' }} />
-          <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>No translation sessions found</div>
-          <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 0.8rem', color: 'var(--app-ink-subtle)' }}>
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <div style={{ fontFamily: 'var(--font-serif)', fontSize: '18px', color: 'var(--app-ink)' }}>No translation sessions found</div>
+          <div style={{ fontSize: '13px', color: 'var(--app-ink-subtle)', marginTop: '0.3rem' }}>
             Run speech translations in the Translator tab to record sessions here.
           </div>
         </div>
@@ -115,69 +125,47 @@ export const HistoryView = ({ baseUrl }) => {
           <div key={item.id} className="history-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <span style={{ fontSize: '1.25rem' }}>
-                  {sFlag} <ArrowRight size={14} style={{ display: 'inline', margin: '0 2px' }} /> {tFlag}
+                <span style={{ fontSize: '1.2rem' }}>
+                  {sFlag} → {tFlag}
                 </span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--app-ink-subtle)' }}>
                   #{shortId}
                 </span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                  <Clock size={12} /> {dateStr}
+                <span style={{ fontSize: '12px', color: 'var(--app-ink-subtle)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                  {dateStr}
                 </span>
-                <span className="badge-tag" style={{ fontSize: '0.7rem', padding: '0.15rem 0.55rem' }}>
+                <span className="badge-tag" style={{ fontSize: '11px', padding: '2px 8px' }}>
                   {item.device_id}
                 </span>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 {totalLat !== undefined && (
-                  <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', color: '#d97706', fontWeight: 600 }}>
-                    ⚡ {totalLat.toFixed(2)}s
+                  <span style={{ fontSize: '12px', fontFamily: 'var(--font-mono)', color: 'var(--app-accent)', fontWeight: 600 }}>
+                    {totalLat.toFixed(2)}s
                   </span>
                 )}
-                <span className="status-badge status-ready" style={{ fontSize: '0.7rem' }}>
-                  <CheckCircle2 size={12} />
+                <span className="status-badge status-ready">
                   {item.status || 'completed'}
                 </span>
               </div>
             </div>
 
             <div className="history-grid">
-              <div
-                style={{
-                  background: 'rgba(255, 255, 255, 0.65)',
-                  padding: '0.85rem 1rem',
-                  borderRadius: '10px',
-                  border: '1px solid var(--border-card)',
-                }}
-              >
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-                  Original ({item.source_lang.toUpperCase()})
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--app-ink-subtle)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>
+                  Original Speech ({item.source_lang?.toUpperCase()})
                 </div>
-                <div style={{ fontSize: '0.95rem', color: 'var(--text-primary)', lineHeight: 1.5 }}>
+                <div style={{ background: 'var(--app-surface-hover)', border: '1px solid var(--app-rule)', borderRadius: '7px', padding: '0.8rem 1rem', fontSize: '14px', color: 'var(--app-ink)' }}>
                   {item.original_text || '—'}
                 </div>
               </div>
 
-              <div
-                style={{
-                  background: 'rgba(255, 255, 255, 0.65)',
-                  padding: '0.85rem 1rem',
-                  borderRadius: '10px',
-                  border: '1px solid var(--border-card)',
-                }}
-              >
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: item.target_lang === 'hi' ? '#d97706' : 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-                  Translated ({item.target_lang.toUpperCase()})
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--app-accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>
+                  Translated ({item.target_lang?.toUpperCase()})
                 </div>
-                <div
-                  style={{
-                    fontSize: '0.95rem',
-                    color: item.target_lang === 'hi' ? '#c2410c' : '#4338ca',
-                    lineHeight: 1.5,
-                    fontFamily: item.target_lang === 'hi' ? 'var(--font-devanagari)' : 'inherit',
-                  }}
-                >
+                <div style={{ background: 'var(--app-surface-hover)', border: '1px solid var(--app-rule)', borderRadius: '7px', padding: '0.8rem 1rem', fontSize: '14px', color: 'var(--app-ink)' }}>
                   {item.translated_text || '—'}
                 </div>
               </div>
@@ -188,3 +176,4 @@ export const HistoryView = ({ baseUrl }) => {
     </div>
   )
 }
+export default HistoryView

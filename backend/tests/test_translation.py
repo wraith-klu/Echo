@@ -6,8 +6,10 @@ Integration tests (marked @pytest.mark.integration) load the real model
 and are skipped unless ENABLE_INTEGRATION_TESTS=1 is set.
 """
 
+from typing import Any
 import pytest
 from unittest.mock import patch, MagicMock
+from app.services.translation import TranslationService
 
 
 # ---------------------------------------------------------------------------
@@ -48,10 +50,8 @@ class TestTranslationValidation:
     @pytest.fixture(autouse=True)
     def patch_model_loading(self):
         """Prevent actual model download during import."""
-        with patch("app.services.translation.AutoModelForSeq2SeqLM") as mock_model, \
-             patch("app.services.translation.AutoTokenizer") as mock_tok:
-            mock_tok.from_pretrained.return_value = MagicMock()
-            mock_model.from_pretrained.return_value = MagicMock()
+        with patch.object(TranslationService, "_init_nllb", return_value=None), \
+             patch.object(TranslationService, "_init_gemini", return_value=None):
             yield
 
     def test_empty_text_raises_value_error(self):
@@ -99,6 +99,7 @@ class TestTranslationIntegration:
     Load the real NLLB model. Runs only when ENABLE_INTEGRATION_TESTS=1.
     These are slow (~20s on first run) but validate actual translation quality.
     """
+    svc: Any = None
 
     @pytest.fixture(scope="class", autouse=True)
     def real_service(self):

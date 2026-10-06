@@ -20,7 +20,7 @@ class LanguageDetectionService:
         return lang_code.lower() in SUPPORTED_LANGUAGES
 
     @staticmethod
-    def detect_language(text: str, whisper_lang: str = None, whisper_prob: float = 0.0) -> dict:
+    def detect_language(text: str, whisper_lang: str | None = None, whisper_prob: float = 0.0) -> dict:
         """
         Detects the language of the audio/text.
         Uses Whisper's audio-based detection as primary source if confidence is high.

@@ -117,7 +117,7 @@ async def test_create_session_auto_registers_device(db_session):
 @pytest.mark.asyncio
 async def test_close_session_marks_inactive(db_session):
     session = await create_session(db_session, device_id="CLOSE_TEST")
-    await close_session(db_session, session_id=session.id)
+    await close_session(db_session, session_id=str(session.id))
 
     from sqlalchemy import select
     from app.models.db import Session as DBSession
@@ -155,9 +155,9 @@ async def test_log_translation_increments_session_counter(db_session):
     result = _make_pipeline_result()
 
     await log_translation(db_session, device_id="COUNTER_DEVICE",
-                          pipeline_result=result, session_id=session.id)
+                          pipeline_result=result, session_id=str(session.id))
     await log_translation(db_session, device_id="COUNTER_DEVICE",
-                          pipeline_result=result, session_id=session.id)
+                          pipeline_result=result, session_id=str(session.id))
 
     from sqlalchemy import select
     from app.models.db import Session as DBSession

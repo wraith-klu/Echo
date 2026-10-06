@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { startAudioRecording } from '../utils/wavEncoder.js'
-import { Mic, Square, Upload, CheckCircle2, AlertCircle, Sparkles, Volume2 } from 'lucide-react'
 
 export const AudioStudio = ({
   onAudioReady,
@@ -20,7 +19,6 @@ export const AudioStudio = ({
   const timerRef = useRef(null)
   const fileInputRef = useRef(null)
 
-  // Derive audio preview URL cleanly
   const audioUrl = useMemo(() => {
     return audioBlob ? URL.createObjectURL(audioBlob) : null
   }, [audioBlob])
@@ -113,26 +111,36 @@ export const AudioStudio = ({
 
   return (
     <section aria-labelledby="audio-input-title">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-        <h2 id="audio-input-title" style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>
-          🎙️ Audio Input Studio
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <h2 id="audio-input-title" className="section-title">
+          Audio Input Studio
         </h2>
         <div style={{ display: 'flex', gap: '0.35rem' }}>
           <button
             type="button"
             className={`btn btn-secondary ${activeMode === 'mic' ? 'active' : ''}`}
-            style={{ padding: '0.3rem 0.8rem', fontSize: '0.78rem' }}
+            style={{ padding: '6px 12px', fontSize: '12px' }}
             onClick={() => setActiveMode('mic')}
           >
-            <Mic size={14} /> Record Voice
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+              <line x1="12" y1="19" x2="12" y2="22" />
+            </svg>
+            Record Voice
           </button>
           <button
             type="button"
             className={`btn btn-secondary ${activeMode === 'upload' ? 'active' : ''}`}
-            style={{ padding: '0.3rem 0.8rem', fontSize: '0.78rem' }}
+            style={{ padding: '6px 12px', fontSize: '12px' }}
             onClick={() => setActiveMode('upload')}
           >
-            <Upload size={14} /> Upload File
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            Upload File
           </button>
         </div>
       </div>
@@ -152,14 +160,24 @@ export const AudioStudio = ({
                   disabled={isProcessing}
                   title={isRecording ? 'Click to stop recording' : 'Click to start recording'}
                 >
-                  {isRecording ? <Square size={34} /> : <Mic size={38} />}
+                  {isRecording ? (
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                      <rect width="18" height="18" x="3" y="3" rx="2" />
+                    </svg>
+                  ) : (
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                      <line x1="12" y1="19" x2="12" y2="22" />
+                    </svg>
+                  )}
                 </button>
               </div>
 
               {isRecording ? (
                 <>
                   <div className="timer-tag">{formatTimer(recordingSeconds)}</div>
-                  <div style={{ fontSize: '0.85rem', color: '#fb7185', fontWeight: 600 }}>
+                  <div style={{ fontSize: '13px', color: 'var(--state-danger)', fontWeight: 500 }}>
                     Recording in progress… Speak now
                   </div>
 
@@ -184,7 +202,7 @@ export const AudioStudio = ({
                   <button
                     type="button"
                     className="btn btn-outline-danger"
-                    style={{ marginTop: '0.5rem', padding: '0.4rem 0.9rem', fontSize: '0.8rem' }}
+                    style={{ marginTop: '0.5rem', padding: '6px 14px', fontSize: '12px' }}
                     onClick={cancelRecording}
                   >
                     Cancel Recording
@@ -192,10 +210,10 @@ export const AudioStudio = ({
                 </>
               ) : (
                 <>
-                  <div style={{ fontWeight: 600, fontSize: '1.05rem', color: 'var(--text-primary)' }}>
+                  <div style={{ fontFamily: 'var(--font-serif)', fontSize: '20px', color: 'var(--app-ink)', fontWeight: 400 }}>
                     Click microphone to start recording
                   </div>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                  <div style={{ fontSize: '13px', color: 'var(--app-ink-subtle)', marginTop: '0.25rem' }}>
                     Web Audio API auto-encodes to 16kHz mono 16-bit PCM WAV
                   </div>
                 </>
@@ -207,16 +225,20 @@ export const AudioStudio = ({
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.5rem',
-                    background: 'rgba(244, 63, 94, 0.12)',
-                    border: '1px solid rgba(244, 63, 94, 0.3)',
-                    borderRadius: '10px',
-                    padding: '0.6rem 0.9rem',
+                    background: 'rgba(248, 113, 113, 0.12)',
+                    border: '1px solid var(--state-danger)',
+                    borderRadius: '7px',
+                    padding: '8px 12px',
                     marginTop: '0.9rem',
-                    color: '#fb7185',
-                    fontSize: '0.82rem',
+                    color: 'var(--state-danger)',
+                    fontSize: '13px',
                   }}
                 >
-                  <AlertCircle size={16} />
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
                   <span>{recordError}</span>
                 </div>
               )}
@@ -235,11 +257,15 @@ export const AudioStudio = ({
                 style={{ display: 'none' }}
                 onChange={handleFileUpload}
               />
-              <Upload size={32} color="#4f46e5" style={{ margin: '0 auto 0.5rem' }} />
-              <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 0.5rem', color: 'var(--app-accent)' }}>
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              <div style={{ fontWeight: 500, fontSize: '14px', color: 'var(--app-ink)' }}>
                 Drop an audio file here or click to browse
               </div>
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+              <div style={{ fontSize: '12px', color: 'var(--app-ink-subtle)', marginTop: '0.25rem' }}>
                 Accepts WAV, MP3, M4A, OGG, FLAC (16kHz mono recommended)
               </div>
             </div>
@@ -249,10 +275,15 @@ export const AudioStudio = ({
           {hasAudioReady && audioUrl && (
             <div className="audio-preview-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <Volume2 size={15} color="#0284c7" /> Audio Preview ({audioDuration.toFixed(1)}s)
+                <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--app-ink)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--app-accent)' }}>
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                  </svg>
+                  Audio Ready ({audioDuration.toFixed(1)}s)
                 </span>
-                <span className="status-badge status-ready" style={{ fontSize: '0.7rem' }}>
+                <span className="status-badge status-ready">
                   Ready to translate
                 </span>
               </div>
@@ -263,11 +294,13 @@ export const AudioStudio = ({
                 id="run-translation-btn"
                 type="button"
                 className="btn btn-primary"
-                style={{ width: '100%', marginTop: '0.5rem', padding: '0.85rem' }}
+                style={{ width: '100%', marginTop: '0.5rem', padding: '12px' }}
                 onClick={onExecuteTranslate}
                 disabled={isProcessing}
               >
-                <Sparkles size={18} />
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z" />
+                </svg>
                 <span>{isProcessing ? 'Translating Speech…' : 'Run Speech Translation Pipeline'}</span>
               </button>
             </div>
@@ -276,24 +309,28 @@ export const AudioStudio = ({
 
         {/* Hints and Instructions Box */}
         <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <CheckCircle2 size={16} color="#34d399" />
+          <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--app-ink)', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--state-success)' }}>
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
             <span>Best Practices</span>
           </div>
 
-          <ul style={{ listStyle: 'none', fontSize: '0.82rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-            <li>• Speak clearly at a normal conversational pace</li>
+          <ul style={{ listStyle: 'none', fontSize: '13px', color: 'var(--app-ink-muted)', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+            <li>• Speak clearly at a natural, conversational pace</li>
             <li>• Keep recording within 2 to 15 seconds for optimal latency</li>
             <li>• Whisper ASR will automatically detect language if set to Auto</li>
             <li>• For Hindi target, NLLB-200 produces authentic Devanagari script output</li>
             <li>• Synthesized audio will be generated via Piper neural TTS</li>
           </ul>
 
-          <div style={{ marginTop: '1rem', paddingTop: '0.85rem', borderTop: '1px solid var(--border-subtle)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            ⚡ Pipeline: VAD → Whisper ASR → Language ID → NLLB-200 → Piper TTS
+          <div style={{ marginTop: '1rem', paddingTop: '0.85rem', borderTop: '1px solid var(--app-rule)', fontSize: '12px', color: 'var(--app-ink-subtle)', fontFamily: 'var(--font-mono)' }}>
+            Pipeline: VAD → Whisper ASR → Language ID → NLLB-200 → Piper TTS
           </div>
         </div>
       </div>
     </section>
   )
 }
+export default AudioStudio

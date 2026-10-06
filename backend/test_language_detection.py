@@ -5,10 +5,12 @@ from app.services.language_detection import LanguageDetectionService, SUPPORTED_
 
 def main():
     # Force UTF-8 output for Windows console support
-    if hasattr(sys.stdout, 'reconfigure'):
-        sys.stdout.reconfigure(encoding='utf-8')
-    if hasattr(sys.stderr, 'reconfigure'):
-        sys.stderr.reconfigure(encoding='utf-8')
+    reconfig_out = getattr(sys.stdout, 'reconfigure', None)
+    if callable(reconfig_out):
+        reconfig_out(encoding='utf-8')
+    reconfig_err = getattr(sys.stderr, 'reconfigure', None)
+    if callable(reconfig_err):
+        reconfig_err(encoding='utf-8')
         
     parser = argparse.ArgumentParser(description="Test script for Language Detection (LID) Service.")
     parser.add_argument("--test-wav", type=str, help="Optional path to a local WAV file to run full ASR + LID test")
@@ -87,10 +89,14 @@ def main():
         print(f"    Input text   : \"{tc['text']}\"")
         print(f"    Whisper inputs: lang={tc['whisper_lang']}, prob={tc['whisper_prob']}")
         
+        tc_text = str(tc["text"]) if tc["text"] is not None else ""
+        tc_wlang = str(tc["whisper_lang"]) if tc["whisper_lang"] is not None else None
+        tc_wprob = float(tc["whisper_prob"]) if tc["whisper_prob"] is not None else 0.0
+
         res = LanguageDetectionService.detect_language(
-            text=tc["text"],
-            whisper_lang=tc["whisper_lang"],
-            whisper_prob=tc["whisper_prob"]
+            text=tc_text,
+            whisper_lang=tc_wlang,
+            whisper_prob=tc_wprob
         )
         
         is_supported = LanguageDetectionService.is_language_supported(res["detected_language"])

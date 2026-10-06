@@ -16,6 +16,29 @@ export const App = () => {
   const [activeTab, setActiveTab] = useState('translate')
   const [baseUrl, setBaseUrl] = useState(import.meta.env.VITE_BACKEND_URL || (import.meta.env.DEV ? 'http://localhost:8000' : 'https://echo-xsr5.onrender.com'))
 
+  // Dual-Theme State (dark / light)
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('echo_theme')
+    if (saved) return saved
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+  })
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark')
+      document.documentElement.classList.remove('light')
+    } else {
+      document.documentElement.classList.add('light')
+      document.documentElement.classList.remove('dark')
+    }
+    localStorage.setItem('echo_theme', theme)
+  }, [theme])
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))
+  }
+
   // Backend Health State
   const [isOnline, setIsOnline] = useState(null)
   const [isPinging, setIsPinging] = useState(false)
@@ -125,16 +148,22 @@ export const App = () => {
   return (
     <div className="app-container">
       {/* Header Bar */}
-      <Header activeTab={activeTab} setActiveTab={setActiveTab} isOnline={isOnline} />
+      <Header
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isOnline={isOnline}
+        theme={theme}
+        toggleTheme={toggleTheme}
+      />
 
       {/* Hero Header */}
       <div className="hero-box">
-        <h1 className="hero-h1">🌐 Echo Translation Portal</h1>
+        <h1 className="hero-h1">Echo Translation Portal</h1>
         <p className="hero-p">
           Real-time multilingual speech translation pipeline combining Whisper ASR, Meta NLLB-200, and Piper Neural TTS for edge IoT devices.
         </p>
         <div className="badges-row">
-          <span className="badge-tag">
+          <span className="badge-tag badge-category">
             <Mic size={13} /> Real-time ASR
           </span>
           <span className="badge-tag">

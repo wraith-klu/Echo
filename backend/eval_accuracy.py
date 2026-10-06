@@ -145,7 +145,7 @@ def transcribe_file(audio_path: str) -> str:
 # WER evaluation mode
 # ---------------------------------------------------------------------------
 
-def run_wer_eval(audio_ref_pairs: List[Tuple[str, str]]) -> None:
+def run_wer_eval(audio_ref_pairs: List[Tuple[str, str]]) -> list[dict]:
     print("\n" + "=" * 60)
     print("  TRANSCRIPTION ACCURACY — Word Error Rate (WER)")
     print("=" * 60)

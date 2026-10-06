@@ -72,7 +72,7 @@ def client():
 
     with patch("app.main.TranscriptionService"), \
          patch("app.main.TranslationService"), \
-         patch("app.main.TTSService"), \
+         patch("app.services.tts.TTSService"), \
          patch("app.main.engine"), \
          patch("app.services.pipeline.PipelineOrchestrator.run", new_callable=AsyncMock, return_value=mock_result), \
          patch("app.core.database.get_db") as mock_get_db:

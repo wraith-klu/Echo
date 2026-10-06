@@ -68,11 +68,11 @@ async def register_device(
         db.add(device)
         logger.info(f"[DB] Registered new device: {device_id!r}")
     else:
-        device.last_seen_at = _utcnow()
+        setattr(device, "last_seen_at", _utcnow())
         if name:
-            device.name = name
+            setattr(device, "name", name)
         if meta:
-            device.meta = meta
+            setattr(device, "meta", meta)
         logger.debug(f"[DB] Updated last_seen_at for device: {device_id!r}")
 
     await db.commit()
@@ -320,5 +320,5 @@ def _translation_to_dict(t: Translation) -> Dict[str, Any]:
         },
         "status": t.status,
         "error_message": t.error_message,
-        "created_at": t.created_at.isoformat() if t.created_at else None,
+        "created_at": t.created_at.isoformat() if getattr(t, "created_at", None) is not None else None,
     }
