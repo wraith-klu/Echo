@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP32-S3 Hardware Flashing & Connection Guide | Echo System</title>
+  <style>
+    :root {
+      --primary: #8b0000;
+      --primary-light: #b22222;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --code-bg: #090d16;
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 2.5rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border);
+    }
+
+    header {
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    h1 {
+      font-size: 1.85rem;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: rgba(139, 0, 0, 0.3);
+      color: #ff6b6b;
+      border: 1px solid var(--primary);
+      margin-top: 0.3rem;
+    }
+
+    .print-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background 0.2s ease;
+    }
+
+    .print-btn:hover {
+      background: var(--primary-light);
+    }
+
+    h2 {
+      font-size: 1.35rem;
+      color: var(--accent-cyan);
+      margin: 2rem 0 1rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      color: #ffffff;
+      margin: 1.25rem 0 0.5rem;
+    }
+
+    p, li {
+      color: #cbd5e1;
+      font-size: 0.95rem;
+    }
+
+    ul, ol {
+      padding-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    li {
+      margin-bottom: 0.4rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0 1.5rem;
+      font-size: 0.9rem;
+      background: var(--code-bg);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--accent-cyan);
+      font-weight: 600;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .alert {
+      background: rgba(245, 158, 11, 0.1);
+      border-left: 4px solid var(--accent-amber);
+      padding: 1rem;
+      border-radius: 0 6px 6px 0;
+      margin: 1rem 0 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    .alert-danger {
+      background: rgba(239, 68, 68, 0.1);
+      border-left: 4px solid #ef4444;
+    }
+
+    .alert-success {
+      background: rgba(16, 185, 129, 0.1);
+      border-left: 4px solid var(--accent-green);
+    }
+
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.85rem;
+      color: #e2e8f0;
+      margin: 0.75rem 0 1.25rem;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+      font-size: 0.88em;
+      color: #38bdf8;
+    }
+
+    pre code {
+      background: transparent;
+      padding: 0;
+      color: inherit;
+    }
+
+    .grid-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.2rem;
+      margin: 1.2rem 0;
+    }
+
+    .card {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.2rem;
+    }
+
+    .card h4 {
+      color: var(--accent-cyan);
+      margin-bottom: 0.6rem;
+      font-size: 1rem;
+    }
+
+    @media print {
+      body {
+        background: white;
+        color: black;
+        padding: 0;
+      }
+      .container {
+        border: none;
+        box-shadow: none;
+        background: white;
+        color: black;
+        padding: 0;
+        max-width: 100%;
+      }
+      .print-btn {
+        display: none;
+      }
+      h1, h2, h3, h4 {
+        color: #8b0000 !important;
+      }
+      p, li, td {
+        color: #111 !important;
+      }
+      pre, table {
+        background: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+        color: black !important;
+      }
+      code {
+        color: #8b0000 !important;
+        background: #f1f5f9 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div>
+        <h1>🎙️ ESP32-S3 Flashing & Connection Guide</h1>
+        <div class="badge">Echo Real-Time Speech Translation System</div>
+      </div>
+      <button class="print-btn" onclick="window.print()">
+        🖨️ Save as PDF / Print
+      </button>
+    </header>
+
+    <div class="alert alert-success">
+      <strong>Firmware Ready:</strong> The complete flashing code is saved as <code>echo_esp32.ino</code> in your project root.
+    </div>
+
+    <!-- SECTION 1 -->
+    <h2>📌 1. Hardware Pinout & Wiring Specifications</h2>
+    <p>Wire the <strong>INMP441 Microphone (I2S0 - RX)</strong> and <strong>MAX98357A Speaker Amplifier (I2S1 - TX)</strong> to your ESP32-S3 as detailed below:</p>
+
+    <div class="grid-cards">
+      <div class="card">
+        <h4>🎙️ INMP441 Microphone (Audio In)</h4>
+        <table>
+          <thead>
+            <tr><th>Sensor Pin</th><th>ESP32-S3 GPIO</th><th>Function</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>VDD</strong></td><td><strong>3.3V</strong></td><td>Power (⚠️ 3.3V Only)</td></tr>
+            <tr><td><strong>GND</strong></td><td><strong>GND</strong></td><td>Common Ground</td></tr>
+            <tr><td><strong>SD</strong></td><td><strong>GPIO 4</strong></td><td>Serial Data (Data In)</td></tr>
+            <tr><td><strong>WS</strong></td><td><strong>GPIO 5</strong></td><td>Word Select (L/R Clock)</td></tr>
+            <tr><td><strong>SCK</strong></td><td><strong>GPIO 6</strong></td><td>Serial Clock (Bit Clock)</td></tr>
+            <tr><td><strong>L/R</strong></td><td><strong>GND</strong></td><td>Select Left Channel</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h4>🔊 MAX98357A Amplifier (Audio Out)</h4>
+        <table>
+          <thead>
+            <tr><th>Module Pin</th><th>ESP32-S3 GPIO</th><th>Function</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>VIN</strong></td><td><strong>5V (or 3.3V)</strong></td><td>Power Input</td></tr>
+            <tr><td><strong>GND</strong></td><td><strong>GND</strong></td><td>Common Ground</td></tr>
+            <tr><td><strong>DIN</strong></td><td><strong>GPIO 7</strong></td><td>Serial Data (Data Out)</td></tr>
+            <tr><td><strong>LRC</strong></td><td><strong>GPIO 8</strong></td><td>Word Select (L/R Clock)</td></tr>
+            <tr><td><strong>BCLK</strong></td><td><strong>GPIO 9</strong></td><td>Bit Clock</td></tr>
+            <tr><td><strong>GAIN</strong></td><td><strong>GND</strong></td><td>Default 9dB Gain</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="alert alert-danger">
+      <strong>⚠️ Critical Voltage Warning:</strong> The INMP441 MEMS microphone operates strictly at <strong>3.3V</strong>. Connecting its VDD pin to 5V will permanently damage the sensor.
+    </div>
+
+    <!-- SECTION 2 -->
+    <h2>🛠️ 2. Arduino IDE One-Time Setup</h2>
+    <ol>
+      <li>Download and launch <a href="https://www.arduino.cc/en/software" target="_blank" style="color: var(--accent-cyan);">Arduino IDE</a>.</li>
+      <li>Open <strong>File ➔ Preferences</strong>.</li>
+      <li>In the <strong>Additional Boards Manager URLs</strong> field, paste this exact URL:
+        <pre><code>https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json</code></pre>
+      </li>
+      <li>Open <strong>Tools ➔ Board ➔ Boards Manager...</strong>, search for <code>esp32</code> by <strong>Espressif Systems</strong>, and click <strong>Install</strong>.</li>
+      <li>Open <strong>Tools ➔ Manage Libraries...</strong> (<code>Ctrl + Shift + I</code>), search for <code>WebSockets</code> by <strong>Markus Sattler</strong>, and click <strong>Install</strong>.</li>
+    </ol>
+
+    <!-- SECTION 3 -->
+    <h2>⚙️ 3. Configuring the Firmware (echo_esp32.ino)</h2>
+    <p>Open <code>echo_esp32.ino</code> in Arduino IDE and update lines 8–18 with your local network settings:</p>
+
+    <pre><code>// 1. Enter your Wi-Fi credentials
+const char* WIFI_SSID     = "YOUR_WIFI_NAME";
+const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+
+// 2. Set your computer's local IPv4 running the FastAPI backend
+const char* BACKEND_HOST  = "192.168.1.15"; // Run 'ipconfig' in terminal
+const int   BACKEND_PORT  = 8000;
+
+// 3. Set desired target language ('hi', 'es', 'fr', 'de', etc.)
+const char* TARGET_LANG   = "hi";
+const char* DEVICE_ID     = "ESP32_001";</code></pre>
+
+    <div class="alert">
+      <strong>💡 Finding your PC's IP address:</strong> Open PowerShell or CMD on your PC and run <code>ipconfig</code>. Look for the <strong>IPv4 Address</strong> under your connected Wi-Fi or Ethernet adapter (e.g., <code>192.168.1.XX</code>).
+    </div>
+
+    <!-- SECTION 4 -->
+    <h2>⚡ 4. Board Settings & Flashing</h2>
+    <p>Under the <strong>Tools</strong> menu in Arduino IDE, apply these settings:</p>
+    <ul>
+      <li><strong>Board:</strong> <code>ESP32S3 Dev Module</code></li>
+      <li><strong>USB CDC On Boot:</strong> <code>Enabled</code></li>
+      <li><strong>Upload Speed:</strong> <code>921600</code></li>
+      <li><strong>Flash Size:</strong> <code>4MB</code> (or 8MB/16MB depending on module)</li>
+      <li><strong>Port:</strong> Select the COM port connected to the ESP32-S3 (e.g. <code>COM3</code>, <code>COM5</code>)</li>
+    </ul>
+
+    <h3>Flashing Steps:</h3>
+    <ol>
+      <li>Press and hold the <strong>BOOT</strong> button on your ESP32-S3.</li>
+      <li>Click the <strong>Upload</strong> button (or press <code>Ctrl + U</code>).</li>
+      <li>Once the console outputs <code>Writing at 0x00010000...</code>, release the <strong>BOOT</strong> button.</li>
+      <li>Wait for the confirmation message: <code>Hard resetting via RTS pin...</code> (Done!).</li>
+    </ol>
+
+    <!-- SECTION 5 -->
+    <h2>🚀 5. Testing & Live Translation Verification</h2>
+    <ol>
+      <li>Open the <strong>Serial Monitor</strong> in Arduino IDE (<code>Ctrl + Shift + M</code>) and set the speed to <strong>115200 baud</strong>.</li>
+      <li>Press the <strong>EN (Reset)</strong> button on the ESP32.</li>
+      <li>Verify the initial handshake:
+        <pre><code>Connecting to Wi-Fi: MyHomeWiFi
+....
+Wi-Fi Connected! IP: 192.168.1.45
+[WS] Connected to Echo Backend!</code></pre>
+      </li>
+      <li><strong>Speak into the INMP441 Microphone</strong>:
+        <p>The ESP32 continuously streams 16-bit 16kHz PCM audio chunks to the server. Once you pause, the backend VAD detects speech boundary and processes ASR ➔ Translation ➔ TTS.</p>
+        <pre><code>[Translation JSON]: {"transcription":"Hello, how are you?","translation":"नमस्ते, आप कैसे हैं?","latencies":{"total_sec":3.2}}
+[Audio In]: Playing 34816 bytes of translated speech...</code></pre>
+      </li>
+      <li>The translated audio will play directly through the connected <strong>MAX98357A speaker</strong>!</li>
+    </ol>
+
+    <footer style="margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+      Echo — Real-Time Multilingual Speech Translation System &bull; Capstone Project 2026
+    </footer>
+  </div>
+
+</body>
+</html>
