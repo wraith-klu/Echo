@@ -70,6 +70,9 @@ class TranslationService:
         self.model = None
         self._nllb_ready = False
 
+        # Hugging Face Inference API resources
+        self._hf_token = getattr(settings, "HF_API_KEY", "") or os.environ.get("HF_API_KEY", "") or os.environ.get("HF_TOKEN", "")
+
         # Gemini resources
         self._api_key = settings.GEMINI_API_KEY or os.environ.get("GEMINI_API_KEY", "")
         self._preferred_gemini = settings.GEMINI_MODEL or os.environ.get("GEMINI_MODEL", "gemini-3.5-flash-lite")
@@ -82,13 +85,16 @@ class TranslationService:
         self._genai = None
         self._active_gemini_model = self._candidate_models[0]
 
-        # ── 1. Attempt to load NLLB-200 (1st Priority) ────────
+        # ── 1. Attempt to load NLLB-200 (1st Priority: Local) ─
         if self._provider in ("auto", "nllb"):
             self._init_nllb()
 
-        # ── 2. Initialize Gemini API (Fallback / Secondary) ───
+        # ── 2. Initialize Gemini API (Secondary Fallback) ─────
         if self._provider in ("auto", "gemini"):
             self._init_gemini()
+
+        if self._hf_token:
+            logger.info("TranslationService: Hugging Face Serverless Inference API is configured and ready.")
 
         if not self._nllb_ready and not self._genai:
             logger.warning(
@@ -231,17 +237,52 @@ class TranslationService:
                     translated = decoded[0].strip()
                     method = "nllb-200-distilled-600M"
                     logger.info(
-                        f"NLLB-200 (Priority 1) succeeded for '{source_lang}'→'{target_lang}' in "
+                        f"NLLB-200 (Priority 1: Local) succeeded for '{source_lang}'→'{target_lang}' in "
                         f"{time.time() - t0:.2f}s"
                     )
             except Exception as nllb_err:
                 logger.warning(
-                    f"NLLB-200 translation encountered error: {nllb_err}. "
-                    "Engaging fallback provider."
+                    f"NLLB-200 local translation error: {nllb_err}. Trying HF API or Gemini fallback."
                 )
                 translated = None
 
-        # ── 3. PRIORITY 2: Gemini Cloud Fallback ──────────────
+        # ── 3. PRIORITY 2: Hugging Face Serverless Inference API ──
+        if not translated and self._hf_token and self._provider in ("auto", "hf", "nllb"):
+            try:
+                import urllib.request
+                import json
+
+                hf_url = f"https://api-inference.huggingface.co/models/{self._nllb_model_name}"
+                payload = {
+                    "inputs": clean_text,
+                    "parameters": {
+                        "src_lang": src_nllb,
+                        "tgt_lang": tgt_nllb
+                    }
+                }
+                req = urllib.request.Request(
+                    hf_url,
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers={
+                        "Authorization": f"Bearer {self._hf_token}",
+                        "Content-Type": "application/json"
+                    }
+                )
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    hf_data = json.loads(resp.read().decode("utf-8"))
+                    if isinstance(hf_data, list) and len(hf_data) > 0:
+                        hf_res = hf_data[0].get("translation_text", "").strip()
+                        if hf_res:
+                            translated = hf_res
+                            method = "hf-nllb-200-api"
+                            logger.info(
+                                f"Hugging Face NLLB-200 API succeeded for '{source_lang}'→'{target_lang}' in {time.time() - t0:.2f}s"
+                            )
+            except Exception as hf_err:
+                logger.warning(f"Hugging Face NLLB-200 API call failed: {hf_err}")
+                translated = None
+
+        # ── 4. PRIORITY 3: Gemini Cloud Fallback ──────────────
         if not translated and self._genai and self._provider in ("auto", "gemini"):
             logger.info(f"Attempting Gemini fallback translation for '{source_lang}'→'{target_lang}'...")
             prompt = (

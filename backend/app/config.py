@@ -59,10 +59,11 @@ class Settings(BaseSettings):
     # Use 'tiny' on free-tier hosts (512 MB RAM); upgrade to 'base' or 'small' on paid plans
     WHISPER_MODEL_NAME: str = "tiny"
     # Translation model settings:
-    # Set TRANSLATION_PROVIDER="auto" (default: try local NLLB-200 first, fallback to Gemini),
-    # "nllb" (local NLLB only), or "gemini" (cloud Gemini only).
+    # Set TRANSLATION_PROVIDER="auto" (local NLLB -> HF Serverless -> Gemini),
+    # "hf" (Hugging Face Serverless Inference API), "nllb" (local NLLB only), or "gemini" (Gemini only).
     TRANSLATION_PROVIDER: str = "auto"
     NLLB_MODEL_NAME: str = "facebook/nllb-200-distilled-600M"
+    HF_API_KEY: str = ""
     # Gemini Flash API key & model for cloud-based translation
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-3.6-flash"
