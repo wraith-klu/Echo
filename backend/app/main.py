@@ -100,7 +100,7 @@ app.add_middleware(
 )
 
 # ── Health & root endpoints ────────────────────────────────────
-@app.get("/", status_code=200)
+@app.api_route("/", methods=["GET", "HEAD"], status_code=200)
 async def root():
     return {
         "name": settings.PROJECT_NAME,
@@ -110,10 +110,9 @@ async def root():
     }
 
 
-@app.get("/health", status_code=200)
+@app.api_route("/health", methods=["GET", "HEAD"], status_code=200)
 async def health_check():
     """Simple health check endpoint returning service status."""
-    logger.info("Health check endpoint called.")
     return {"status": "ok"}
 
 
