@@ -103,7 +103,7 @@ class PipelineOrchestrator:
         
         # 3. Determine source language via LID (or override)
         t0 = time.time()
-        if source_language_override:
+        if source_language_override and source_language_override.lower().strip() != "auto":
             source_lang = source_language_override.lower().strip()
             lid_res = {
                 "detected_language": source_lang,
@@ -118,8 +118,17 @@ class PipelineOrchestrator:
             )
         latencies["lid_sec"] = round(time.time() - t0, 4)
         
-        source_lang = str(lid_res.get("detected_language") or "")
+        source_lang = str(lid_res.get("detected_language") or "").lower().strip()
         is_source_supported = LanguageDetectionService.is_language_supported(source_lang)
+
+        # Smart fallback: If detected language code is not in supported list (e.g. Welsh 'cy' false positive),
+        # but we have valid transcribed speech, fall back source to English ('en') so translation proceeds
+        if not is_source_supported and transcribed_text:
+            logger.warning(f"Detected language '{source_lang}' is not in supported list. Defaulting source language to 'en'.")
+            source_lang = "en"
+            lid_res["detected_language"] = "en"
+            lid_res["source"] = "fallback_supported"
+            is_source_supported = True
         
         transcription_payload = {
             "text": transcribed_text,

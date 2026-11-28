@@ -41,14 +41,18 @@ class LanguageDetectionService:
         # 1. Clean input text
         clean_text = text.strip() if text else ""
         
-        # 2. Check if Whisper has a high-confidence result
-        if whisper_lang and whisper_lang != "unknown" and whisper_prob >= 0.6:
-            logger.info(f"Using Whisper primary language detection: '{whisper_lang}' (confidence: {whisper_prob:.4f})")
-            return {
-                "detected_language": whisper_lang.lower(),
-                "confidence": round(whisper_prob, 4),
-                "source": "whisper"
-            }
+        # 2. If Whisper detected a language:
+        # Check if it is directly supported
+        if whisper_lang and whisper_lang != "unknown":
+            wl = whisper_lang.lower().strip()
+            # If whisper says a supported language with decent confidence, use it
+            if wl in SUPPORTED_LANGUAGES and whisper_prob >= 0.5:
+                logger.info(f"Using Whisper primary language detection: '{wl}' (confidence: {whisper_prob:.4f})")
+                return {
+                    "detected_language": wl,
+                    "confidence": round(whisper_prob, 4),
+                    "source": "whisper"
+                }
 
         # 3. Fallback: Run text-based language detection on the transcribed text
         if clean_text:
@@ -56,39 +60,48 @@ class LanguageDetectionService:
                 # detect_langs returns a list of Language objects sorted by probability descending
                 predictions = detect_langs(clean_text)
                 if predictions:
-                    best_match = predictions[0]
-                    detected_lang = best_match.lang.lower()
-                    confidence = best_match.prob
+                    # Look for the highest confidence supported language first
+                    for pred in predictions:
+                        pl = pred.lang.lower().strip()
+                        if pl in SUPPORTED_LANGUAGES and pred.prob >= 0.4:
+                            logger.info(
+                                f"Text-based language detection (langdetect) resolved supported language: '{pl}' (confidence: {pred.prob:.4f})"
+                            )
+                            return {
+                                "detected_language": pl,
+                                "confidence": round(pred.prob, 4),
+                                "source": "langdetect"
+                            }
                     
+                    # If none matched supported, take the best match
+                    best_match = predictions[0]
+                    detected_lang = best_match.lang.lower().strip()
                     logger.info(
-                        f"Low Whisper confidence ({whisper_prob:.4f}). "
-                        f"Text-based fallback (langdetect) resolved: '{detected_lang}' (confidence: {confidence:.4f})"
+                        f"Text-based fallback (langdetect) resolved: '{detected_lang}' (confidence: {best_match.prob:.4f})"
                     )
                     return {
                         "detected_language": detected_lang,
-                        "confidence": round(confidence, 4),
+                        "confidence": round(best_match.prob, 4),
                         "source": "langdetect"
                     }
             except LangDetectException as e:
-                logger.warning(f"Text-based language detection failed (empty or un-featureful text): {e}")
+                logger.warning(f"Text-based language detection failed: {e}")
             except Exception as e:
                 logger.error(f"Unexpected error in langdetect: {e}", exc_info=True)
 
-        # 4. Final Fallback: Use low-confidence Whisper language if available, otherwise default to "en"
+        # 4. If whisper language was supported, use it even with lower confidence
         if whisper_lang and whisper_lang != "unknown":
-            logger.warning(
-                f"LID Fallback: both primary and text detection failed/low confidence. "
-                f"Falling back to low-confidence Whisper: '{whisper_lang}' (confidence: {whisper_prob:.4f})"
-            )
-            return {
-                "detected_language": whisper_lang.lower(),
-                "confidence": round(whisper_prob, 4),
-                "source": "fallback"
-            }
+            wl = whisper_lang.lower().strip()
+            if wl in SUPPORTED_LANGUAGES:
+                return {
+                    "detected_language": wl,
+                    "confidence": round(whisper_prob, 4),
+                    "source": "whisper"
+                }
 
-        logger.warning("LID Fallback: No transcription text or audio detection available. Defaulting to 'en'.")
+        # 5. Default fallback to English ('en')
         return {
             "detected_language": "en",
-            "confidence": 1.0,
+            "confidence": 0.8,
             "source": "fallback"
         }
